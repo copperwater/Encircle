@@ -76,7 +76,7 @@ def redraw():
         window.addstr(strpos, 0, '')
 
         # iterate through the formatting and write out everything
-        if v.showTime:
+        if sett.showTime:
             window.addstr('[' + time.strftime('%H:%M', prn.tstamp) + '] ',
                           stylemap['time'])
         tmpstrpos = strpos
@@ -135,12 +135,19 @@ def showHelp():
     pass
     
 # Interpret a line of user input.
+# I am only implementing commands described in RFCs 1459 and 2812.
+# freenode has a lot of nonstandard ones.
 def interpret(line):
     # Check for null string
     if line == '': return
     
     # if formatCommands = false, do no interpretation
     if not sett.formatCommands:
+        # check for /option being used, which should switch back to normal
+        # commands
+        if line.split()[0] == '/option':
+            sett.formatCommands = True
+            return
         socksend(line)
         return
 
@@ -151,7 +158,7 @@ def interpret(line):
     # if not, default to sending a PRIVMSG to the current channel
     if line[0] != '/':
         if v.currChannel == 0:
-            irclib.addCurrChannel(irclib.prn(['This is not a channel'],
+            irclib.addCurrChannel(irclib.prn(['You are not on a channel'],
                                              ['error']))
         else:
             socksend('PRIVMSG ' + ccn + ' :' + line)
@@ -240,8 +247,53 @@ def interpret(line):
         new = irclib.insertChannel(noempty[1])
         v.currChannel = new
 
+    elif command == '/option':
+        if len(noempty) < 2:
+            irclib.addCurrChannel(irclib.prn(['Format: /option arg1 [arg2...]'],
+                                             ['error']))
+            return
+            
+        if noempty[1] == 'pings':
+            if len(noempty) == 2:
+                sett.showPings = not sett.showPings
+            else:
+                if noempty[2] == 'on':
+                    sett.showPings = True
+                elif noempty[2] == 'off':
+                    sett.showPings == False
+
+        if noempty[1] == 'format-output':
+            if len(noempty) == 3:
+                if noempty[2] == 'on':
+                    sett.formatOutput = True
+                elif noempty[2] == 'off':
+                    sett.formatOutput = False
+
+        if noempty[1] == 'format-commands':
+            if len(noempty) == 3:
+                if noempty[2] == 'on':
+                    sett.formatCommands = True
+                elif noempty[2] == 'off':
+                    sett.formatCommands = False
+                    
+
+        if noempty[1] == 'nonstandard':
+            if len(noempty) == 3:
+                if noempty[2] == 'on':
+                    sett.ignoreNonstandard = False
+                elif noempty[2] == 'off':
+                    sett.ignoreNonstandard = True
+
+        if noempty[1] == 'time':
+            sett.showTime = not sett.showTime
+            redraw()
+            
     elif command == '/mode':
-        pass
+        if len(noempty) < 3:
+            irclib.addCurrChannel(irclib.prn([
+                'Format: /mode channel (+/-)modes [parameters]', '\n',
+                'Run /help mode for more information on modes and parameters.'],
+                                             ['error','error','error']))
 
     elif command == '/names':
         if len(noempty) == 1:
@@ -254,6 +306,13 @@ def interpret(line):
 
     elif command == '/kick': # operator only command
         pass
+
+    elif command == '/notice':
+        if len(cmdlist) < 3:
+            irclib.addCurrChannel(irclib.prn(['Format: /notice target message'],
+                                             ['error']))
+        tail = ' '.join(cmdlist[2:])
+        socksend('NOTICE '+cmdlist[1]+' :'+tail)
 
     elif command == '/motd':
         pass
@@ -275,6 +334,13 @@ def interpret(line):
 
     elif command == '/admin':
         socksend('ADMIN')
+
+    elif command == '/interpret':
+        sett.formatCommands = not sett.formatCommands
+
+    else:
+        irclib.addCurrChannel(irclib.prn(['Unrecognized command ', command],
+                                         ['error', 'error']))
 
 # Formats a nickname
 def fmtNick(nick):
@@ -315,6 +381,7 @@ if len(sys.argv) < 3:
     print '           --raw-commands'
     print '           --hide-pings'
     print '           --show-nonstandard'
+    print '           --show-time'
     sys.exit(1)
 
 v.server = sys.argv[1]
@@ -349,6 +416,8 @@ for x in range(3, len(sys.argv)):
         sett.showPings = False
     elif st == '--show-nonstandard':
         sett.ignoreNonstandard = False
+    elif st == '--show-time':
+        sett.showTime = True
     else:
         print 'Unrecognized option '+st
         sys.exit(1)

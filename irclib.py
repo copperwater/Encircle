@@ -42,7 +42,7 @@ class prn:
     # horiz characters wide.
     def getOverflowLines(self, horiz):
         # if showing time, there will be an extra "[xx:xx] " (8 chars)
-        currlen = 8 if v.showTime else 0
+        currlen = 8 if sett.showTime else 0
         lin = 0
         for x in self.strlist:
             if x == '\n':
@@ -229,7 +229,6 @@ def process(msg):
             # someone sent a PM directly to the user
             # should open a query window with them
             n = insertChannel(p.getName())
-            v.currChannel = n
         else:
             # normal message to channel, just get its number
             n = getChannelNumber(p.params[0])
@@ -327,9 +326,14 @@ def process(msg):
                                   ['nick', 'notice', 'notice']))
         
     elif p.command == 'NOTICE':
-        # Not too much to do here. Just log it to the server console.
-        addNumChannel(0, prn([p.getName() + ' ' + p.trail],
-                             ['notice'], True))
+        # Notices can be sent to a user or channel, just like PRIVMSGs.
+        if p.params[0] == v.currNick:
+            c = 0
+        else:
+            c = getChannelNumber(p.params[0])
+            
+        addNumChannel(c, prn([p.getName(), ' notice: ' + p.trail],
+                             ['nick', 'notice'], True))
         
     elif p.command == 'MODE':
         # Known kinds of MODE responses:
@@ -409,6 +413,13 @@ def process(msg):
 
     elif p.command == '042': # your id
         addNumChannel(0, prn(['Your unique ID is ' + p.params[1]], ['notice']))
+
+    elif p.command == '219': # end of stats
+        if not sett.disregard:
+            addCurrChannel(prn(['End of stats report.'],['notice']))
+
+    elif p.command == '242': # stats server uptime
+        addCurrChannel(prn([p.trail], ['notice']))
         
     elif p.command == '250': # connection stats
         if not sett.hideServerStats:
@@ -436,16 +447,20 @@ def process(msg):
             addNumChannel(0, prn([p.trail], ['notice']))
 
     elif p.command == '256': # administrative info announcement
-            addNumChannel(0, prn([p.trail], ['notice'], True))
+        addNumChannel(0, prn([p.trail], ['notice'], True))
 
     elif p.command == '257': # admin announcement 1
-            addNumChannel(0, prn([p.trail], ['notice'], True))
+        addNumChannel(0, prn([p.trail], ['notice'], True))
 
     elif p.command == '258': # admin announcement 2
-            addNumChannel(0, prn([p.trail], ['notice'], True))
+        addNumChannel(0, prn([p.trail], ['notice'], True))
 
     elif p.command == '259': # admin email
-            addNumChannel(0, prn([p.trail], ['notice'], True))
+        addNumChannel(0, prn([p.trail], ['notice'], True))
+
+    elif p.command == '263': # server dropped command without completing it
+        addCurrChannel(prn([p.params[1], ': ', p.trail],
+                           ['error', 'error', 'error']))
         
     elif p.command == '265': # local users nonstandard
         if not (sett.hideServerStats or sett.ignoreNonstandard):
@@ -501,7 +516,7 @@ def process(msg):
 
     elif p.command == '321': # beginning of channel list
         if not sett.disregard:
-            addNumChannel(0, prn(['Beginning of channel list'], ['notice'])))
+            addNumChannel(0, prn(['Beginning of channel list'], ['notice']))
             v.currChannel = 0
 
     elif p.command == '322': # channel list

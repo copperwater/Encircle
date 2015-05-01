@@ -4,6 +4,9 @@
 # whether the server output gets formatted
 formatOutput = True
 
+# whether the client should parse user input before send
+formatCommands = True
+
 # whether a bunch of server statistics get ignored
 hideServerStats = True
 
@@ -13,17 +16,11 @@ hideMOTD = True
 # whether some superfluous server commands get ignored
 disregard = True
 
-# whether the client should parse user input before send
-formatCommands = True
-
 # whether pings should be logged
-# THIS SHOULD BE AN OPTION
 showPings = True
 
-# whether time should be displayed
-# THIS SHOULD BE AN OPTION
-# UNIMPLEMENTED
-#showTime = True
+# whether to print the time a message was received
+showTime = False
 
 # whether nonstandard messages will be ignored
 ignoreNonstandard = True

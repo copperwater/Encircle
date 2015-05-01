@@ -6,8 +6,3 @@ server = ""
 currNick = ""
 currChannel = 0
 chanlist = []
-
-# changeable options
-
-# whether to print the time a message was received
-showTime = True
