@@ -435,15 +435,24 @@ def process(msg):
         if not sett.hideServerStats:
             addNumChannel(0, prn([p.trail], ['notice']))
 
-    elif p.command == '256': # general administrative info
-        extra = True
+    elif p.command == '256': # administrative info announcement
+            addNumChannel(0, prn([p.trail], ['notice'], True))
+
+    elif p.command == '257': # admin announcement 1
+            addNumChannel(0, prn([p.trail], ['notice'], True))
+
+    elif p.command == '258': # admin announcement 2
+            addNumChannel(0, prn([p.trail], ['notice'], True))
+
+    elif p.command == '259': # admin email
+            addNumChannel(0, prn([p.trail], ['notice'], True))
         
     elif p.command == '265': # local users nonstandard
-        if not sett.hideServerStats:
+        if not (sett.hideServerStats or sett.ignoreNonstandard):
             addNumChannel(0, prn([p.trail], ['notice']))
         
     elif p.command == '266': # global users nonstandard
-        if not sett.hideServerStats:
+        if not (sett.hideServerStats or sett.ignoreNonstandard):
             addNumChannel(0, prn([p.trail], ['notice']))
 
     elif p.command == '301': # other user is away
@@ -475,6 +484,13 @@ def process(msg):
                            ['notice', 'nick', 'none', 'notice', 'none', 'none',
                             'notice', 'none', 'none', 'notice', 'none']))
 
+    elif p.command == '317': # seconds idle and signon time
+        tstr = datetime.datetime.fromtimestamp(int(p.params[3])
+                                               ).strftime("%Y-%m-%d %H:%M:%S")
+        addCurrChannel(prn([p.params[1], ' has been idle for ', p.params[2],
+                            ' seconds and signed on at ', tstr],
+                           ['nick', 'notice', 'notice', 'notice', 'notice']))
+
     elif p.command == '318': # end of whois list
         if not sett.disregard:
             addCurrChannel(prn(['End of whois list'],['notice']))
@@ -482,6 +498,21 @@ def process(msg):
     elif p.command == '319': # whois reply, channels the user is on
         addCurrChannel(prn([p.params[1], ' is on channels ', p.trail],
                            ['nick', 'notice', 'notice']))
+
+    elif p.command == '321': # beginning of channel list
+        if not sett.disregard:
+            addNumChannel(0, prn(['Beginning of channel list'], ['notice'])))
+            v.currChannel = 0
+
+    elif p.command == '322': # channel list
+        addNumChannel(0, prn([p.params[1], ' (', p.params[2], ' users): ',
+                              p.trail],
+                             ['channel', 'notice', 'notice', 'notice', 'none'],
+                             True))
+
+    elif p.command == '323': # end of channel list
+        if not sett.disregard:
+            addNumChannel(0, prn(['End of channel list'], ['notice']))
 
     elif p.command == '324': # current channel modes
         addNamedChannel(p.params[1], prn([p.params[1], ' modes: ', p.params[2]],
@@ -495,6 +526,11 @@ def process(msg):
         addNamedChannel(p.params[1], prn([p.params[1], ' was created at ',
                                           p.params[2]],
                                          ['channel', 'notice', 'notice']))
+
+    elif p.command == '330': # nonstandard logged in as
+        if not sett.ignoreNonstandard:
+            addCurrChannel(prn([p.params[1], ' is logged in as ', p.params[2]],
+                               ['nick', 'notice', 'notice']))
         
     elif p.command == '332': # channel topic
         addNamedChannel(p.params[1], prn(['Topic: ', p.trail],
@@ -546,10 +582,18 @@ def process(msg):
             addCurrChannel(prn(['End of MOTD'],['notice']))
 
     elif p.command == '378': # freenode nonstandard whois host response
-        pass
+        extra = True
+
+    elif p.command == '379': # nonstandard whois modes
+        if not sett.ignoreNonstandard:
+            addCurrChannel(prn([p.params[1], ' ', p.trail],
+                               ['nick', 'notice', 'notice']))
 
     elif p.command == '401': # no such nick
         addCurrChannel(prn([p.params[1] + ': No such nick'], ['error']))
+
+    elif p.command == '402': # no such server
+        addCurrChannel(prn([p.params[1] + ': No such server'], ['error']))
         
     elif p.command == '403': # no such channel
         addCurrChannel(prn([p.params[1] + ': No such channel'], ['error']))
@@ -621,12 +665,21 @@ def process(msg):
     elif p.command == '524': # help page not found
         addCurrChannel(prn([p.params[1], ' help page not found'],
                            ['error'],['error']))
+
+    elif p.command == '671': # nonstandard is using a secure connection
+        if not sett.ignoreNonstandard:
+            addCurrChannel(prn([p.params[1], ' ' + p.trail],
+                               ['nick', 'notice']))
                        
     elif p.command == '704': # help header
         addCurrChannel(prn([p.trail], ['notice']))
 
     elif p.command == '705': # help body
         addCurrChannel(prn([p.trail], ['notice']))
+
+    elif p.command == '706': # end of help
+        if not sett.disregard:
+            addCurrChannel(prn([p.trail],['notice']))
 
     elif p.command == 'PONG': # user sent a ping request, I don't know why
         addNumChannel(0, 'PONG')

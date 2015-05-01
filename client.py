@@ -83,7 +83,7 @@ def redraw():
         for st, ty in zip(prn.strlist, prn.typlist):
             if st == '\n':
                 tmpstrpos += 1
-                curses.setsyx(tmpstrpos,0)
+                window.addstr(tmpstrpos, 0, '') #curses.setsyx(tmpstrpos,0)
                 continue
             if st.isspace(): continue
             
@@ -242,6 +242,12 @@ def interpret(line):
 
     elif command == '/mode':
         pass
+
+    elif command == '/names':
+        if len(noempty) == 1:
+            socksend('NAMES '+irclib.getCurrChannelName())
+        elif len(noempty) == 2:
+            socksend('NAMES '+noempty[1])
         
     elif command == '/invite': # operator only command
         pass
@@ -255,8 +261,20 @@ def interpret(line):
     elif command == '/op': # operator only command
         pass
 
+    elif command == '/list':
+        if len(noempty) > 2:
+            irclib.addCurrChannel(irclib.prn(['Format: /list [channel]'],
+                                             ['error']))
+            return
+        elif len(noempty) == 2:
+            socksend('LIST '+noempty[1])
+        socksend('LIST')
+
     elif command == '/ping':
         pass
+
+    elif command == '/admin':
+        socksend('ADMIN')
 
 # Formats a nickname
 def fmtNick(nick):
@@ -295,6 +313,8 @@ if len(sys.argv) < 3:
     print '           --show-motd'
     print '           --disregard-nothing'
     print '           --raw-commands'
+    print '           --hide-pings'
+    print '           --show-nonstandard'
     sys.exit(1)
 
 v.server = sys.argv[1]
@@ -325,6 +345,10 @@ for x in range(3, len(sys.argv)):
         sett.disregard = False
     elif st == '--raw-commands':
         sett.formatCommands = False
+    elif st == '--no-pings':
+        sett.showPings = False
+    elif st == '--show-nonstandard':
+        sett.ignoreNonstandard = False
     else:
         print 'Unrecognized option '+st
         sys.exit(1)
@@ -428,6 +452,7 @@ while True:
                 socksend('PONG :Pong')
                 if sett.showPings:
                     irclib.addNumChannel(0, irclib.prn(['PING'],['notice']))
+                    redraw()
                 continue
             irclib.process(data)
             redraw()
