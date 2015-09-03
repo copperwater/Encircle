@@ -10,6 +10,7 @@ import ircSettings as sett
 import ircVars as v
 import time
 import errno
+import os # may be moved if read conf stuff gets moved
 
 # Client globals
 dimensions = []
@@ -181,9 +182,12 @@ def interpret(line):
                                              ['error']))
             return
         socksend("PRIVMSG " + cmdlist[1] + " :" + tail)
-        irclib.addCurrChannel(irclib.prn(['<'+v.currNick+'> ', tail],
-                                         ['you', 'none']))
-            
+        # This creates a new private window like a query
+        new = irclib.insertChannel(cmdlist[1], True)
+        v.currChannel = new
+        irclib.addNumChannel(new, irclib.prn(['<'+v.currNick+'> ', tail],
+                                             ['you', 'none']))
+        
     elif command == '/me':
         # Format for /me commands wraps the message in ^A characters and
         # puts ACTION at the beginning (?)
@@ -200,6 +204,9 @@ def interpret(line):
         socksend('JOIN '+noempty[1])
 
     elif command == '/part':
+        irclib.addCurrChannel(irclib.prn([str(v.chanlist[v.currChannel].isQuery)],
+                                         ['none']))
+                              
         if len(noempty) == 1:
             if v.currChannel == 0:
                 irclib.addCurrChannel(irclib.prn(['This is not a channel'],
@@ -244,7 +251,7 @@ def interpret(line):
         if len(noempty) != 2:
             irclib.addCurrChannel(irclib.prn(['Format: /query nick'],['error']))
             return
-        new = irclib.insertChannel(noempty[1])
+        new = irclib.insertChannel(noempty[1], True)
         v.currChannel = new
 
     elif command == '/option':
@@ -357,7 +364,30 @@ def finish(mess="", code=0, quitmsg=''):
 # for signal handler
 def signalHandler(signal, frame):
     finish()
+
+    '''
+attemptServer=''
+attemptNick=''
     
+def readConfFile(filename=os.path.expanduser("~/.irc_conf")):
+    ctr=1
+    with open(filename, "r") as f:
+        for line in f.readlines():
+            if len(line) == 0 or line[0] == "#" or line.isspace():
+                pass
+            elif line[:14] == 'defaultserver=':
+                attemptServer=line[14:]
+            elif line[:12] == 'defaultnick=':
+                attemptNick=line[12:]
+            else:
+                print 'Warning: line', ctr, "of config file is invalid"
+
+            ctr += 1 
+
+readConfFile()
+sys.exit(0)
+    '''
+
 # begin program execution
 #
 # ONLY CLASSES AND FUNCTIONS AND VARIABLES BEFORE THIS
@@ -369,6 +399,9 @@ attemptRealname = 'x'
 attemptPassword = ''
 attemptChannel = ''
 attemptPort = 6667
+
+# read prefs from ~/.irc_conf here
+
 
 # usage: [name] server nick [[--channel=<channel>] [--port=<port>] [--realname=<realname>] [--ident=<ident>] [--password=<password>]]
 if len(sys.argv) < 3:
@@ -386,6 +419,7 @@ if len(sys.argv) < 3:
 
 v.server = sys.argv[1]
 attemptNick = sys.argv[2]
+
 for x in range(3, len(sys.argv)):
     st = sys.argv[x]
     if st[:9] == '--channel':
@@ -530,7 +564,7 @@ while True:
             inputVertical = len(inputStr) // dimensions[1]
             char = window.getch(dimensions[0]-1, len(inputStr) % dimensions[1])
             time.sleep(.001)
-            if char == 127: # backspace
+            if char == curses.KEY_BACKSPACE or char == 127: # backspace
                 inputStr = inputStr[:-1]
                 
             elif char == 9: # tab
@@ -548,10 +582,15 @@ while True:
 
             elif char == curses.KEY_RIGHT: # right arrow
                 scrollPos = 0
+
+            elif char == curses.KEY_LEFT: # left arrow
+                pass # does nothing
                 
             elif char == ord('\n'):
                 interpret(inputStr)
                 inputStr = ''
+            elif char > 255:
+                pass # some weird keys like F1-F12 that crash chr()
             else:
                 inputStr += chr(char)
             

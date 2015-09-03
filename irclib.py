@@ -129,13 +129,14 @@ def getNamedChannel(name):
 
 # Given a channel name, attempt to insert that channel into the list. If it
 # already exists, return its number. If it gets inserted, also return its number
-def insertChannel(name):
+# Second argument determines whether this should be marked as a query channel.
+def insertChannel(name, isQuery):
     x=0
     for c in v.chanlist:
         if c.name == name:
             return x
         x += 1
-    v.chanlist.append(chan(name))
+    v.chanlist.append(chan(name, isQuery))
     return len(v.chanlist) - 1
 
 # Remove a channel with the given name from the list. (actually all channels)
@@ -228,7 +229,7 @@ def process(msg):
         if p.params[0] == v.currNick:
             # someone sent a PM directly to the user
             # should open a query window with them
-            n = insertChannel(p.getName())
+            n = insertChannel(p.getName(), True)
         else:
             # normal message to channel, just get its number
             n = getChannelNumber(p.params[0])
@@ -289,7 +290,7 @@ def process(msg):
             
         if n == v.currNick:
             # you joined, create new channel and log to that channel
-            cn = insertChannel(chName)
+            cn = insertChannel(chName, False)
             v.currChannel = cn
             addCurrChannel(prn(['You', ' joined ', chName],
                                ['you', 'notice', 'channel']))
@@ -597,7 +598,9 @@ def process(msg):
             addCurrChannel(prn(['End of MOTD'],['notice']))
 
     elif p.command == '378': # freenode nonstandard whois host response
-        extra = True
+        if not sett.ignoreNonstandard:
+            addCurrChannel(prn([p.params[1], ' ', p.trail],
+                               ['nick', 'notice', 'notice']))
 
     elif p.command == '379': # nonstandard whois modes
         if not sett.ignoreNonstandard:
