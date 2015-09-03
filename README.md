@@ -3,7 +3,7 @@ A simple IRC client written in Python. It runs in a terminal and uses the curses
 It works with ordinary IRC client syntax, and it also provides low-level access to receive and send raw data to the server.
 
 Features of note:
-* Channels and queries are all given their own screens. The currently displaying one can be changed with TAB.
+* Channels and queries are all given their own screens. Use TAB to switch between windows.
 * Scrolling through a window is done with the arrow keys.
 
 Arguments/initialization options:
@@ -14,8 +14,8 @@ Arguments/initialization options:
 * --raw-commands disables all parsing of your input
 * --disregard-nothing forces the program to show certain messages that would otherwise be suppressed, such as "End of /NAMES list".
 * --show-server-stats prints some server statistics that would otherwise be ignored, such as the server creation time and number of users
-* --show-motd will print the message of the day, which would otherwise be suppressed.
+* --show-motd will print the server message of the day, which would otherwise be suppressed.
 * --hide-pings will stop server pings from appearing
 * --show-nonstandard enables nonstandard (non-RFC) commands to be processed. If they are enabled and the server sends a nonstandard an unexpected format, the program may crash. 
 
-This client was tested primarily on irc.freenode.net.
+This client was tested primarily on irc.freenode.net and some other servers.
