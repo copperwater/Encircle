@@ -25,6 +25,10 @@ showTime = False
 # whether nonstandard messages will be ignored
 ignoreNonstandard = True
 
+# time that messages will be kept in the queue, in seconds, after which they
+# will be deleted
+msgTimeout = 86400
+
 # file to log to, a value of '' does no logging
 # UNIMPLEMENTED
 #logFile = '' 

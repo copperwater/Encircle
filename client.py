@@ -366,6 +366,7 @@ def signalHandler(signal, frame):
     finish()
 
     '''
+    # conf file read and set settings
 attemptServer=''
 attemptNick=''
     
@@ -392,6 +393,9 @@ sys.exit(0)
 #
 # ONLY CLASSES AND FUNCTIONS AND VARIABLES BEFORE THIS
 #
+
+# stop creating .pyc files
+sys.dont_write_bytecode = True
 
 # initial default values for stuff
 attemptIdent = 'x'

@@ -1,5 +1,5 @@
 Add a user-specific ~/.irc_conf file that maps server/nick combinations to realname/ident combos. When a user tries to log into a server/nick combo that exists, autosupply the ident and real name (override if they are specified on the command line). This file can also be used for other defaults.
-Set a time limit on messages (default 1 day or something) that will periodically clear out any "expired" messages.
+Make the time limit settable as a conf file setting.
 Add a locking option/lurker mode that ignores all your input unless it is the unlocking command
 Implement the rest of the common user commands.
 Implement bolding of text with ^B characters/underlining with ^_ characters

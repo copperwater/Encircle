@@ -4,8 +4,12 @@ import socket
 import string
 import time
 import datetime
+import sched
 import ircSettings as sett
 import ircVars as v
+
+# Variables that are static to this irclib module.
+timeOfLastRemove = time.time()
 
 # Small class to bundle IRC data into an easy to parse format.
 class irc:
@@ -35,7 +39,7 @@ class prn:
     def __init__(self, strlist, typlist, important=False):
         self.strlist = strlist
         self.typlist = typlist
-        self.tstamp = time.localtime()
+        self.tstamp = time.time()
         self.important = important
 
     # Return the number of extra lines that are needed to print in a terminal
@@ -66,10 +70,10 @@ class chan:
             self.name = name; self.isOp = isOp
             
     name = ""
-    peopleOn = []
-    msgs = []
+    peopleOn = [] # list of user objects
+    msgs = [] # list of prn objects
     isQuery = False # if this is a query window (set of PMs, not a real channel)
-    hasUnread = False
+    hasUnread = False # if true, the program will notify the user of this
     
     def __init__(self, name, iQ=False):
         self.name = name
@@ -153,6 +157,13 @@ def eraseChannel(name):
 # Inserts a new prn object into a given channel.
 # Every other add function is a wrapper for this one.
 def addChannel(chan, msg):
+    # check to see if messages should be deleted
+    now = time.time()
+    global timeOfLastRemove
+    if now - timeOfLastRemove > sett.msgTimeout:
+        removeAllOldMessages()
+        timeOfLastRemove = now
+
     chan.msgs.append(msg)
     # make a note that the channel's most recent message came in now
     chan.hasUnread = chan.hasUnread or msg.important
@@ -177,7 +188,7 @@ def addNamedChannel(name, msg):
 
 #
 # FUNCTIONS FOR PARSING RECEIVED IRC MESSAGES
-# extractName, isAction, parse, 
+# extractName, isAction, parse
 
 def extractName(st): # take "user" from a string like "user!~server.com"
     return st.split('!')[0]
@@ -210,7 +221,20 @@ def parse(line): # take a raw line from the server and split into components
     params = commandString[1:]
         
     return irc(prefix, command, params, trail)
-
+    
+# Clear out all outdated messages from all channels.
+def removeAllOldMessages():
+    now = time.time()
+    for c in v.chanlist:
+        #c.msgs.append(prn(['Cleanup time'], ['none']))
+        ctr = 0
+        for msg in c.msgs:
+            if now - msg.tstamp < sett.msgTimeout:
+                break
+            else:
+                ctr += 1
+        c.msgs = c.msgs[ctr:]
+            
 # Given a raw message from the server, parse it, format it, and possibly add it
 # to the list of strings to be formatted.
 def process(msg):
