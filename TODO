@@ -1,16 +1,23 @@
-Add a user-specific ~/.irc_conf file that maps server/nick combinations to realname/ident combos. When a user tries to log into a server/nick combo that exists, autosupply the ident and real name (override if they are specified on the command line). This file can also be used for other defaults.
-Make the time limit settable as a conf file setting.
-Add a locking option/lurker mode that ignores all your input unless it is the unlocking command
-Implement the rest of the common user commands.
-Implement bolding of text with ^B characters/underlining with ^_ characters
-Bold messages that appear when current nick is mentioned
+Critical issues
+=================================
 
-User commands that are not represented in the code:
+
+Normal things
+=================================
+Implement the rest of the common user commands:
 /kick op-only
 /mode op-only
 /topic op-only
 
-Server messages unrepresented:
-307 mynick theirnick :is a registered nick
-900 mynick mynick!ident@server mynick :you are now logged in
 
+Minor things
+=================================
+Implement bolding of text with ^B characters/underlining with ^_ characters
+Bold messages that appear when current nick is mentioned
+
+
+Wishlist
+=================================
+Add a user-specific ~/.irc_conf file that maps server/nick combinations to realname/ident combos. When a user tries to log into a server/nick combo that exists, autosupply the ident and real name (override if they are specified on the command line). This file can also be used for other defaults.
+Make the time limit settable as a conf file setting.
+Add a locking option/lurker mode that ignores all your input unless it is the unlocking command

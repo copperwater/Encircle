@@ -1,2 +1,8 @@
 # No python bytecode
 *.pyc
+.DS_STORE
+
+# listener is not part of this
+listener/*
+
+.gitignore

@@ -78,7 +78,8 @@ def redraw():
 
         # iterate through the formatting and write out everything
         if sett.showTime:
-            window.addstr('[' + time.strftime('%H:%M', prn.tstamp) + '] ',
+            window.addstr('['+time.strftime('%H:%M',
+                                            time.localtime(prn.tstamp))+'] ',
                           stylemap['time'])
         tmpstrpos = strpos
         for st, ty in zip(prn.strlist, prn.typlist):
@@ -555,13 +556,23 @@ while True:
                     finish("Connection closed.", 1)
                 raise serr
 
-            if data[:4] == "PING":
+            if data is None:
+                finish('Connection terminated', 1)
+        
+            elif data[:4] == "PING":
                 socksend('PONG :Pong')
                 if sett.showPings:
                     irclib.addNumChannel(0, irclib.prn(['PING'],['notice']))
                     redraw()
                 continue
-            irclib.process(data)
+                
+            elif data[:5] == 'ERROR':
+                # something very bad is happening
+                irclib.addCurrChannel(irclib.prn([data],['error']))
+                
+            else:
+                irclib.process(data)
+                
             redraw()
             
         else:

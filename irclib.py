@@ -506,6 +506,9 @@ def process(msg):
     elif p.command == '306': # now marked as away
         addCurrChannel(prn(['You are now marked as being away'], ['notice']))
 
+    elif p.command == '307': # is a registered nick
+        addCurrChannel(prn([p.params[1], 'is a registered nick'], ['nick', 'error']))
+
     elif p.command == '311': # whois reply, user section
         addCurrChannel(prn(['WHOIS ', p.params[1], '\n', 'realname = ', p.trail,
                             '\n', 'user = ', p.params[2], '\n', 'host = ',
@@ -723,8 +726,12 @@ def process(msg):
         if not sett.disregard:
             addCurrChannel(prn([p.trail],['notice']))
 
+    elif p.command == '900': # you are now logged in
+        addNumChannel(0, prn(['You are now logged in as ', p.params[0]],
+                             ['notice', 'you']))
+
     elif p.command == 'PONG': # user sent a ping request, I don't know why
-        addNumChannel(0, 'PONG')
+        addNumChannel(0, 'PONG') 
 
     else:
         extra = True
