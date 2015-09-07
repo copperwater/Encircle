@@ -8,12 +8,14 @@ Implement the rest of the common user commands:
 /kick op-only
 /mode op-only
 /topic op-only
+Different input buffers for every channel
 
 
 Minor things
 =================================
 Implement bolding of text with ^B characters/underlining with ^_ characters
 Bold messages that appear when current nick is mentioned
+If new activity happens in other windows raising a !, tab should go over to them without cycling through other channels
 
 
 Wishlist
@@ -21,3 +23,4 @@ Wishlist
 Add a user-specific ~/.irc_conf file that maps server/nick combinations to realname/ident combos. When a user tries to log into a server/nick combo that exists, autosupply the ident and real name (override if they are specified on the command line). This file can also be used for other defaults.
 Make the time limit settable as a conf file setting.
 Add a locking option/lurker mode that ignores all your input unless it is the unlocking command
+Add a command to display a list of windows.
