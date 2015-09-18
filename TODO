@@ -9,6 +9,7 @@ Implement the rest of the common user commands:
 /mode op-only
 /topic op-only
 Different input buffers for every channel
+Why does /part from server channel print 'False'
 
 
 Minor things
