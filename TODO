@@ -26,3 +26,4 @@ Make the time limit settable as a conf file setting.
 Add a locking option/lurker mode that ignores all your input unless it is the unlocking command
 Add a command to display a list of windows.
 Add an option(s) to control the visibility of joins/parts/quits/modechange/etc
+Add a command to "go to bottom". Actually, just have better navigation.
