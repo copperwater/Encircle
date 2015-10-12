@@ -10,7 +10,7 @@ Implement the rest of the common user commands:
 /topic op-only
 Different input buffers for every channel
 Why does /part from server channel print 'False'
-
+Joining/quitting, and other stuff happening in unviewed channels, should not be considered important enough to raise the ! 
 
 Minor things
 =================================
