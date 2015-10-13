@@ -27,3 +27,4 @@ Add a locking option/lurker mode that ignores all your input unless it is the un
 Add a command to display a list of windows.
 Add an option(s) to control the visibility of joins/parts/quits/modechange/etc
 Add a command to "go to bottom". Actually, just have better navigation.
+Bell option - sound system bell when new messages come in
