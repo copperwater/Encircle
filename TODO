@@ -1,6 +1,6 @@
 Critical issues
 =================================
-is a registered nick prints without spacing
+
 
 Normal things
 =================================
@@ -9,8 +9,9 @@ Implement the rest of the common user commands:
 /mode op-only
 /topic op-only
 Different input buffers for every channel
-Why does /part from server channel print 'False'
 Joining/quitting, and other stuff happening in unviewed channels, should not be considered important enough to raise the ! 
+Private message windows show quits but not joins
+
 
 Minor things
 =================================
