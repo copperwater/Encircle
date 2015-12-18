@@ -30,3 +30,5 @@ Add an option(s) to control the visibility of joins/parts/quits/modechange/etc
 Add a command to "go to bottom". Actually, just have better navigation.
 Bell option - sound system bell when new messages come in
 Add /ragequit command, which is the same as /quit but sends the message "Ragequit" instead of the default
+Code Page 437 support?
+
