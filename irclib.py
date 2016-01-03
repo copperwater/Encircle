@@ -366,9 +366,14 @@ def process(msg):
         # :server MODE #chan +ns
         # :user!~userhost MODE #chan +m
         # :user!~userhost MODE #chan +v person
+        
+        # important only if it affects the user
+        target = p.params[0]
+        important = (target == v.currNick)
+            
         if len(p.trail) > 0:
-            addNumChannel(0, prn([p.params[0], ' mode change: ', p.trail],
-                                 ['nick', 'notice', 'notice'], True))
+            addNumChannel(0, prn([target, ' mode change: ', p.trail],
+                                 ['nick', 'notice', 'notice'], important))
             return
         else:
             # all the other change mode types are channel-based
@@ -380,9 +385,12 @@ def process(msg):
             target = p.params[0]; tmode = 'channel'
             if len(p.params) == 3:
                 target = p.params[2]; tmode = 'nick'
+                if target == v.currNick:
+                    important = True
+                    tmode = 'you'
 
             msg = prn([src, ' changed mode of ', target, ': ', p.params[1]],
-                      [mode, 'notice', tmode, 'notice', 'notice'], True)
+                      [mode, 'notice', tmode, 'notice', 'notice'], important)
                 
             addNamedChannel(p.params[0], msg)
 
@@ -390,23 +398,27 @@ def process(msg):
         # just log the change in topic
         addNamedChannel(p.params[0],
                         prn([p.getName(), ' changed the topic of ', p.params[0], ' to ', p.trail],
-                            ['nick', 'notice', 'channel', 'notice', 'none'],
-                            True))
+                            ['nick', 'notice', 'channel', 'notice', 'none']))
 
     elif p.command == 'KICK':
         # The kickee and channel written to vary depending on who got kicked.
         tmp = p.params[1]; mode = 'nick'; n = getChannelNumber(p.params[0])
+        # Not important unless you got kicked
+        important = False
+        
         if tmp == v.currNick:
             # If you got kicked, the channel is deleted and 0 gets logged to.
             eraseChannel(p.params[0])
             v.currChannel = 0; n = 0
             tmp = 'You'; mode = 'you'
+            important = True
+            
         # Whoever got kicked, log it.
         addNumChannel(n, prn([tmp, ' got kicked out of ', p.params[0], ' by ',
                               p.getName(), ': ', p.trail],
                              [mode, 'notice', 'channel', 'notice', 'nick',
                               'notice', 'none'],
-                             True))
+                             important))
         
     elif p.command == 'INVITE':
         # Just log it in the default window.
@@ -439,12 +451,13 @@ def process(msg):
     elif p.command == '042': # your id
         addNumChannel(0, prn(['Your unique ID is ' + p.params[1]], ['notice']))
 
-    elif p.command == '219': # end of stats
-        if not sett.disregard:
+    elif p.command == '219': # end of server stats
+        if not (sett.disregard or sett.hideServerStats):
             addCurrChannel(prn(['End of stats report.'],['notice']))
 
     elif p.command == '242': # stats server uptime
-        addCurrChannel(prn([p.trail], ['notice']))
+        if not sett.hideServerStats:
+            addCurrChannel(prn([p.trail], ['notice']))
         
     elif p.command == '250': # connection stats
         if not sett.hideServerStats:
@@ -472,16 +485,16 @@ def process(msg):
             addNumChannel(0, prn([p.trail], ['notice']))
 
     elif p.command == '256': # administrative info announcement
-        addNumChannel(0, prn([p.trail], ['notice'], True))
+        addNumChannel(0, prn([p.trail], ['notice']))
 
     elif p.command == '257': # admin announcement 1
-        addNumChannel(0, prn([p.trail], ['notice'], True))
+        addNumChannel(0, prn([p.trail], ['notice']))
 
     elif p.command == '258': # admin announcement 2
-        addNumChannel(0, prn([p.trail], ['notice'], True))
+        addNumChannel(0, prn([p.trail], ['notice']))
 
     elif p.command == '259': # admin email
-        addNumChannel(0, prn([p.trail], ['notice'], True))
+        addNumChannel(0, prn([p.trail], ['notice']))
 
     elif p.command == '263': # server dropped command without completing it
         addCurrChannel(prn([p.params[1], ': ', p.trail],
@@ -507,7 +520,7 @@ def process(msg):
         addCurrChannel(prn(['You are now marked as being away'], ['notice']))
 
     elif p.command == '307': # is a registered nick
-        addCurrChannel(prn([p.params[1], 'is a registered nick'], ['nick', 'error']))
+        addCurrChannel(prn([p.params[1], ' is a registered nick'], ['nick', 'error']))
 
     elif p.command == '311': # whois reply, user section
         addCurrChannel(prn(['WHOIS ', p.params[1], '\n', 'realname = ', p.trail,
@@ -617,11 +630,11 @@ def process(msg):
             addNumChannel(0, prn([p.trail],['notice']))
 
     elif p.command == '375': # motd header
-        if not sett.disregard:
+        if not (sett.disregard or sett.hideMOTD):
             addCurrChannel(prn(['Beginning of MOTD'],['notice']))
 
     elif p.command == '376': # end of motd 
-        if not sett.disregard:
+        if not (sett.disregard or sett.hideMOTD):
             addCurrChannel(prn(['End of MOTD'],['notice']))
 
     elif p.command == '378': # freenode nonstandard whois host response
@@ -681,6 +694,11 @@ def process(msg):
 
     elif p.command == '462': # already registered
         addCurrChannel(prn(['You have already signed in'], ['error']))
+
+    elif p.command == '470': # forwarding you to another channel
+        addNumChannel(0, prn(["Forwarding you from ", p.params[1], ' to ',
+                              p.params[2]],
+                             ['notice','notice','notice','notice']));
 
     elif p.command == '471': # channel is full
         addCurrChannel(prn([p.params[1], ' is full'],

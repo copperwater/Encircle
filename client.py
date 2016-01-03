@@ -205,8 +205,6 @@ def interpret(line):
         socksend('JOIN '+noempty[1])
 
     elif command == '/part':
-        irclib.addCurrChannel(irclib.prn([str(v.chanlist[v.currChannel].isQuery)],
-                                         ['none']))
                               
         if len(noempty) == 1:
             if v.currChannel == 0:
@@ -224,7 +222,7 @@ def interpret(line):
 
     elif command == '/quit':
         tail = ' '.join(cmdlist[1:])
-        finish('Program exited successfully', 0, tail)
+        finish('', 0, tail)
         
     elif command == '/nick':
         if len(noempty) != 2:
@@ -337,6 +335,9 @@ def interpret(line):
             socksend('LIST '+noempty[1])
         socksend('LIST')
 
+    elif command == '/ragequit': # kind of a joke but here it is
+        finish('', 0, 'RAGEQUIT')
+        
     elif command == '/ping':
         pass
 
@@ -355,9 +356,9 @@ def fmtNick(nick):
     return "<"+nick+">"
 
 # Cleans up and closes the program
-def finish(mess="", code=0, quitmsg=''):
-    socksend('QUIT :Quit')
-    s.close()
+def finish(mess="", code=0, quitmsg='Quit'):
+    socksend('QUIT :'+quitmsg)
+    #s.close()
     curses.endwin()
     if mess != "": print mess
     sys.exit(code)
@@ -482,7 +483,7 @@ curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE) # header bar
 curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK) # nick
 curses.init_pair(3, curses.COLOR_CYAN, curses.COLOR_BLACK) # you
 curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK) # notices
-curses.init_pair(5, curses.COLOR_YELLOW, curses.COLOR_BLACK) # old channel
+curses.init_pair(5, curses.COLOR_YELLOW, curses.COLOR_BLACK) # used to be the channel color
 curses.init_pair(6, curses.COLOR_BLACK, curses.COLOR_CYAN) # you in header
 curses.init_pair(7, curses.COLOR_BLACK, curses.COLOR_YELLOW) # channel in header
 curses.init_pair(8, curses.COLOR_MAGENTA, curses.COLOR_BLACK) # error
@@ -553,11 +554,11 @@ while True:
                 data = getLine()
             except socket.error as serr:
                 if serr.errno == errno.ECONNRESET:
-                    finish("Connection closed.", 1)
+                    finish("Connection closed.", 1, 'Connection closed')
                 raise serr
 
             if data is None:
-                finish('Connection terminated', 1)
+                finish('Connection terminated', 1, 'Connection terminated')
         
             elif data[:4] == "PING":
                 socksend('PONG :Pong')

@@ -1,0 +1,57 @@
+Encircle Extended Documentation
+
+Dependencies
+============
+This client requires Python 2 to run and needs the Python curses library as well (which you may have as part of your Python installation.)
+
+Filters
+=======
+Encircle has a number of filters which apply to specific kinds of messages. The main reason is that these aren't the type of thing that most people probably want to see. Message types can belong to multiple filters, and if a message is caught by any filter, it will not be shown.
+These are the filters defined in Encircle:
+Server statistics: information about the network that is typically sent automatically when you connect. This filter is on by default.
+  002 - server host IP/name
+  003 - server creation time
+  004 - server version and permitted user and channel modes
+  005 - server's list of things it supports
+  219 - end of server stats list
+  242 - server uptime
+  250 - connection statistics
+  251 - users/servers online
+  252 - operators online
+  253 - number of unknown connections
+  254 - number of channels
+  255 - number of clients/servers
+  265 - local users (nonstandard, freenode)
+  266 - global users (nonstandard, freenode)
+Message Of The Day: message sent by a server to all newly connecting clients. This filter is on by default.
+  372 - motd body
+  375 - motd header
+  376 - end of motd
+Nonstandard: any message not defined in either RFC 1459 or RFC 2812. Several are widely used, though. This filter is on by default.
+  265 - freenode's local users statistic
+  266 - freenode's global users statistic
+  330 - <user> is logged in as <X>
+  378 - freenode's WHOIS host response
+  379 - freenode's WHOIS modes
+  671 - person is using a secure connection
+Begins and Ends: messages that are sent before and after a body of other messages, like a names list or channel list. This filter is on by default.
+  219 - end of server stats list
+  318 - end of WHOIS list
+  321 - beginning of channel list
+  323 - end of channel list
+  366 - end of channel names list
+  368 - end of channel ban list
+  369 - end of WHOWAS list
+  375 - motd header
+  376 - end of motd
+  706 - end of help page
+  
+Initialization options not covered elsewhere
+============================================
+--raw-output: Do no formatting to incoming messages from the server. Raw IRC messages can be messy, so this is not recommended except for debugging.
+--raw-commands: Do no formatting to user input and send all messages unprocessed to the server. IRC command syntax can be messy and tedious to type out, so this is not recommended except for debugging.
+--show-server-stats: Disable the default blocking filter for server statistics.
+--show-motd: Disable the default blocking filter for the message of the day.
+--show-nonstandard: Disable the default blocking filter for nonstandard messages.
+--show-begins-and-ends: Disable the default blocking filter for begin or end messages.
+--hide-pings: Enable the blocking filter for pings
