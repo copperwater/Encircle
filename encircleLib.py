@@ -5,8 +5,8 @@ import string
 import time
 import datetime
 import sched
-import ircSettings as sett
-import ircVars as v
+import encircleSettings as settings
+import encircleVars as variables
 
 # Variables that are static to this irclib module.
 timeOfLastRemove = time.time()
@@ -46,7 +46,7 @@ class prn:
     # horiz characters wide.
     def getOverflowLines(self, horiz):
         # if showing time, there will be an extra "[xx:xx] " (8 chars)
-        currlen = 8 if sett.showTime else 0
+        currlen = 8 if settings.showTime else 0
         lin = 0
         for x in self.strlist:
             if x == '\n':
@@ -110,12 +110,12 @@ class chan:
 
 # Get the current channel name as a string.
 def getCurrChannelName():
-    return v.chanlist[v.currChannel].name
+    return variables.chanlist[variables.currChannel].name
 
 # Given a channel name, return the index of that channel.
 def getChannelNumber(name):
     x = 0
-    for c in v.chanlist:
+    for c in variables.chanlist:
         if c.name == name:
             return x
         x += 1
@@ -123,7 +123,7 @@ def getChannelNumber(name):
 
 # Get the channel object from its name
 def getNamedChannel(name):
-    for c in v.chanlist:
+    for c in variables.chanlist:
         if c.name == name:
             return c
 
@@ -136,18 +136,18 @@ def getNamedChannel(name):
 # Second argument determines whether this should be marked as a query channel.
 def insertChannel(name, isQuery):
     x=0
-    for c in v.chanlist:
+    for c in variables.chanlist:
         if c.name == name:
             return x
         x += 1
-    v.chanlist.append(chan(name, isQuery))
-    return len(v.chanlist) - 1
+    variables.chanlist.append(chan(name, isQuery))
+    return len(variables.chanlist) - 1
 
 # Remove a channel with the given name from the list. (actually all channels)
 def eraseChannel(name):
-    for c in v.chanlist:
+    for c in variables.chanlist:
         if c.name == name:
-            v.chanlist.remove(c)
+            variables.chanlist.remove(c)
             return
 
 #
@@ -160,7 +160,7 @@ def addChannel(chan, msg):
     # check to see if messages should be deleted
     now = time.time()
     global timeOfLastRemove
-    if now - timeOfLastRemove > sett.msgTimeout:
+    if now - timeOfLastRemove > settings.msgTimeout:
         removeAllOldMessages()
         timeOfLastRemove = now
 
@@ -170,16 +170,16 @@ def addChannel(chan, msg):
     
 # Inserts a new prn object into a numbered channel.
 def addNumChannel(num, msg):
-    if num > len(v.chanlist):
+    if num > len(variables.chanlist):
         # no real defined behavior for this
         pass
     else:
-        c = v.chanlist[num]
+        c = variables.chanlist[num]
         addChannel(c, msg)
 
 # Inserts a new prn object into the current channel.
 def addCurrChannel(msg):
-    addNumChannel(v.currChannel, msg)
+    addNumChannel(variables.currChannel, msg)
 
 # Inserts a new prn object into a channel identified by name.
 def addNamedChannel(name, msg):
@@ -225,11 +225,11 @@ def parse(line): # take a raw line from the server and split into components
 # Clear out all outdated messages from all channels.
 def removeAllOldMessages():
     now = time.time()
-    for c in v.chanlist:
+    for c in variables.chanlist:
         #c.msgs.append(prn(['Cleanup time'], ['none']))
         ctr = 0
         for msg in c.msgs:
-            if now - msg.tstamp < sett.msgTimeout:
+            if now - msg.tstamp < settings.msgTimeout:
                 break
             else:
                 ctr += 1
@@ -238,8 +238,8 @@ def removeAllOldMessages():
 # Given a raw message from the server, parse it, format it, and possibly add it
 # to the list of strings to be formatted.
 def process(msg):
-    # If the formatOutput setting is true, do no formatting.
-    if sett.formatOutput == False:
+    # If the formatOutput settings is true, do no formatting or filtering.
+    if settings.formatOutput == False:
         addCurrChannel(prn([msg], ['none']))
         return
         
@@ -250,7 +250,7 @@ def process(msg):
     
     if p.command == 'PRIVMSG':
         # params[0] is either channel name or current nick
-        if p.params[0] == v.currNick:
+        if p.params[0] == variables.currNick:
             # someone sent a PM directly to the user
             # should open a query window with them
             n = insertChannel(p.getName(), True)
@@ -281,18 +281,18 @@ def process(msg):
         newNick = p.trail
         if p.trail == '':
             newNick = p.params[0]
-        if n == v.currNick:
-            v.currNick = newNick
+        if n == variables.currNick:
+            variables.currNick = newNick
             # The user is in all channels, so every non-query channel should
             # be notified
-            for c in v.chanlist:
+            for c in variables.chanlist:
                 if c.isQuery: continue
                 addChannel(c, prn(['You', ' changed nick to ', newNick],
                                   ['you', 'notice', 'you']))
         else:
             msg = prn([n, ' changed nick to ', newNick],
                       ['nick', 'notice', 'nick'], True)
-            for c in v.chanlist:
+            for c in variables.chanlist:
                 if c.isQuery and c.name == n:
                     # change query name to the new nick
                     c.name = newNick
@@ -312,26 +312,26 @@ def process(msg):
         else:
             chName = p.params[0]
             
-        if n == v.currNick:
+        if n == variables.currNick:
             # you joined, create new channel and log to that channel
             cn = insertChannel(chName, False)
-            v.currChannel = cn
+            variables.currChannel = cn
             addCurrChannel(prn(['You', ' joined ', chName],
                                ['you', 'notice', 'channel']))
         else:
             # new person joined, report it to channel and add name to list
-            c = v.chanlist[getChannelNumber(chName)]
+            c = variables.chanlist[getChannelNumber(chName)]
             c.addUser(n)
             addChannel(c, prn([n, ' joined ', chName],
                               ['nick', 'notice', 'channel']))
 
     elif p.command == 'PART':
         n = p.getName()
-        if n == v.currNick:
+        if n == variables.currNick:
             # You left the channel, do no logging, delete the channel window
             # Ideally this should revert to the most recently used channel
             eraseChannel(p.params[0])
-            v.currChannel = 0
+            variables.currChannel = 0
             addNumChannel(0, prn(['You', ' left ', p.params[0]],
                                  ['you', 'notice', 'channel']))
         else:
@@ -344,7 +344,7 @@ def process(msg):
     elif p.command == 'QUIT':
         # You never get a QUIT for yourself.
         n = p.getName()
-        for c in v.chanlist:
+        for c in variables.chanlist:
             if c.nickOn(n):
                 c.removeUser(n)
                 addChannel(c, prn([p.getName(), ' has quit: ', p.trail],
@@ -352,7 +352,7 @@ def process(msg):
         
     elif p.command == 'NOTICE':
         # Notices can be sent to a user or channel, just like PRIVMSGs.
-        if p.params[0] == v.currNick:
+        if p.params[0] == variables.currNick:
             c = 0
         else:
             c = getChannelNumber(p.params[0])
@@ -369,7 +369,7 @@ def process(msg):
         
         # important only if it affects the user
         target = p.params[0]
-        important = (target == v.currNick)
+        important = (target == variables.currNick)
             
         if len(p.trail) > 0:
             addNumChannel(0, prn([target, ' mode change: ', p.trail],
@@ -379,13 +379,13 @@ def process(msg):
             # all the other change mode types are channel-based
             # the rest of this is just to construct the message and log it
             src = p.getName(); mode = 'nick'
-            if src == v.currNick:
+            if src == variables.currNick:
                 src = 'You'; mode = 'you'
 
             target = p.params[0]; tmode = 'channel'
             if len(p.params) == 3:
                 target = p.params[2]; tmode = 'nick'
-                if target == v.currNick:
+                if target == variables.currNick:
                     important = True
                     tmode = 'you'
 
@@ -406,10 +406,10 @@ def process(msg):
         # Not important unless you got kicked
         important = False
         
-        if tmp == v.currNick:
+        if tmp == variables.currNick:
             # If you got kicked, the channel is deleted and 0 gets logged to.
             eraseChannel(p.params[0])
-            v.currChannel = 0; n = 0
+            variables.currChannel = 0; n = 0
             tmp = 'You'; mode = 'you'
             important = True
             
@@ -433,55 +433,55 @@ def process(msg):
         addNumChannel(0, prn([p.trail], ['notice']))
         
     elif p.command == '002': # your host is
-        if not sett.hideServerStats:
+        if not settings.hideServerStats:
             addNumChannel(0, prn([p.trail], ['notice']))
         
     elif p.command == '003': # server creation timestamp
-        if not sett.hideServerStats:
+        if not settings.hideServerStats:
             addNumChannel(0, prn([p.trail], ['notice']))
 
     elif p.command == '004': # server version and permitted user/channel modes
-        if not sett.hideServerStats:
+        if not settings.hideServerStats:
             addNumChannel(0, prn([p.trail], ['notice']))
 
     elif p.command == '005': # server supported list
-        if not sett.hideServerStats:
+        if not settings.hideServerStats:
             addNumChannel(0, prn([p.trail], ['notice']))
 
     elif p.command == '042': # your id
         addNumChannel(0, prn(['Your unique ID is ' + p.params[1]], ['notice']))
 
     elif p.command == '219': # end of server stats
-        if not (sett.disregard or sett.hideServerStats):
+        if not (settings.hideBeginsEnds or settings.hideServerStats):
             addCurrChannel(prn(['End of stats report.'],['notice']))
 
     elif p.command == '242': # stats server uptime
-        if not sett.hideServerStats:
+        if not settings.hideServerStats:
             addCurrChannel(prn([p.trail], ['notice']))
         
     elif p.command == '250': # connection stats
-        if not sett.hideServerStats:
+        if not settings.hideServerStats:
             addNumChannel(0, prn([p.trail], ['notice']))
         
     elif p.command == '251': # total users/servers
-        if not sett.hideServerStats:
+        if not settings.hideServerStats:
             addNumChannel(0, prn([p.trail], ['notice']))
         
     elif p.command == '252': # operators online
-        if not sett.hideServerStats:
+        if not settings.hideServerStats:
             addNumChannel(0, prn([p.params[1]+' operators online'], ['notice']))
         
     elif p.command == '253': # unknown connections
-        if not sett.hideServerStats:
+        if not settings.hideServerStats:
             addNumChannel(0, prn([p.params[1]+' unknown connections'],
                                  ['notice']))
         
     elif p.command == '254': # number of channels
-        if not sett.hideServerStats:
+        if not settings.hideServerStats:
             addNumChannel(0, prn([p.params[1]+' channels'], ['notice']))
         
     elif p.command == '255': # number clients/servers
-        if not sett.hideServerStats:
+        if not settings.hideServerStats:
             addNumChannel(0, prn([p.trail], ['notice']))
 
     elif p.command == '256': # administrative info announcement
@@ -501,11 +501,11 @@ def process(msg):
                            ['error', 'error', 'error']))
         
     elif p.command == '265': # local users nonstandard
-        if not (sett.hideServerStats or sett.ignoreNonstandard):
+        if not (settings.hideServerStats or settings.ignoreNonstandard):
             addNumChannel(0, prn([p.trail], ['notice']))
         
     elif p.command == '266': # global users nonstandard
-        if not (sett.hideServerStats or sett.ignoreNonstandard):
+        if not (settings.hideServerStats or settings.ignoreNonstandard):
             addNumChannel(0, prn([p.trail], ['notice']))
 
     elif p.command == '301': # other user is away
@@ -548,7 +548,7 @@ def process(msg):
                            ['nick', 'notice', 'notice', 'notice', 'notice']))
 
     elif p.command == '318': # end of whois list
-        if not sett.disregard:
+        if not settings.hideBeginsEnds:
             addCurrChannel(prn(['End of whois list'],['notice']))
 
     elif p.command == '319': # whois reply, channels the user is on
@@ -556,9 +556,9 @@ def process(msg):
                            ['nick', 'notice', 'notice']))
 
     elif p.command == '321': # beginning of channel list
-        if not sett.disregard:
+        if not settings.hideBeginsEnds:
             addNumChannel(0, prn(['Beginning of channel list'], ['notice']))
-            v.currChannel = 0
+            variables.currChannel = 0
 
     elif p.command == '322': # channel list
         addNumChannel(0, prn([p.params[1], ' (', p.params[2], ' users): ',
@@ -567,7 +567,7 @@ def process(msg):
                              True))
 
     elif p.command == '323': # end of channel list
-        if not sett.disregard:
+        if not settings.hideBeginsEnds:
             addNumChannel(0, prn(['End of channel list'], ['notice']))
 
     elif p.command == '324': # current channel modes
@@ -584,7 +584,7 @@ def process(msg):
                                          ['channel', 'notice', 'notice']))
 
     elif p.command == '330': # nonstandard logged in as
-        if not sett.ignoreNonstandard:
+        if not settings.ignoreNonstandard:
             addCurrChannel(prn([p.params[1], ' is logged in as ', p.params[2]],
                                ['nick', 'notice', 'notice']))
         
@@ -605,7 +605,7 @@ def process(msg):
     elif p.command == '353': # names list
         # reset the names of people in the channel
         x = getChannelNumber(p.params[2])
-        c = v.chanlist[x]
+        c = variables.chanlist[x]
         c.peopleOn = []
         namelist = p.trail.split()
         for n in namelist:
@@ -614,36 +614,36 @@ def process(msg):
                           ['notice', 'nick']))
 
     elif p.command == '366': # end of names list
-        if not sett.disregard:
+        if not settings.hideBeginsEnds:
             addCurrChannel(prn(['End of names list'],['notice']))
 
     elif p.command == '368': # end of channel ban list
-        if not sett.disregard:
+        if not settings.hideBeginsEnds:
             addCurrChannel(prn(['End of channel ban list'],['notice']))
 
     elif p.command == '369': # end of whowas list
-        if not sett.disregard:
+        if not settings.hideBeginsEnds:
             addCurrChannel(prn(['End of whowas list'],['notice']))
                      
     elif p.command == '372': # motd body
-        if not sett.hideMOTD:
+        if not settings.hideMOTD:
             addNumChannel(0, prn([p.trail],['notice']))
 
     elif p.command == '375': # motd header
-        if not (sett.disregard or sett.hideMOTD):
+        if not (settings.hideBeginsEnds or settings.hideMOTD):
             addCurrChannel(prn(['Beginning of MOTD'],['notice']))
 
     elif p.command == '376': # end of motd 
-        if not (sett.disregard or sett.hideMOTD):
+        if not (settings.hideBeginsEnds or settings.hideMOTD):
             addCurrChannel(prn(['End of MOTD'],['notice']))
 
     elif p.command == '378': # freenode nonstandard whois host response
-        if not sett.ignoreNonstandard:
+        if not settings.ignoreNonstandard:
             addCurrChannel(prn([p.params[1], ' ', p.trail],
                                ['nick', 'notice', 'notice']))
 
     elif p.command == '379': # nonstandard whois modes
-        if not sett.ignoreNonstandard:
+        if not settings.ignoreNonstandard:
             addCurrChannel(prn([p.params[1], ' ', p.trail],
                                ['nick', 'notice', 'notice']))
 
@@ -730,7 +730,7 @@ def process(msg):
                            ['error'],['error']))
 
     elif p.command == '671': # nonstandard is using a secure connection
-        if not sett.ignoreNonstandard:
+        if not settings.ignoreNonstandard:
             addCurrChannel(prn([p.params[1], ' ' + p.trail],
                                ['nick', 'notice']))
                        
@@ -741,7 +741,7 @@ def process(msg):
         addCurrChannel(prn([p.trail], ['notice']))
 
     elif p.command == '706': # end of help
-        if not sett.disregard:
+        if not settings.hideBeginsEnds:
             addCurrChannel(prn([p.trail],['notice']))
 
     elif p.command == '900': # you are now logged in

@@ -7,6 +7,7 @@ Features of note:
 * Scrolling through a window is done with the arrow keys.
 
 Arguments/initialization options:
+* --port=_port_ attempts to connect to the server on the given port (the default is 6667)
 * --channel=_chan_ immediately sends a /join command to the specified channel upon connecting
 * --realname=_name_ and --ident=_ident_ set your real name and ident (they will both otherwise be 'x' because they cannot be blank)
 * --password=_pass_ sends a password (use if your nickname is registered; also note that this uses the IRC PASS command and some servers require you to send a message to NickServ instead. Currently Encircle supports only PASS.)

@@ -1,5 +1,6 @@
 # Values which should, ideally, be user-controlled options.
-# Booleans should default to true.
+# When adding new settings, name them such that:
+# 1) If it is a boolean option, its default (and value here) should be True.
 
 # whether the server output gets formatted
 formatOutput = True
@@ -7,14 +8,14 @@ formatOutput = True
 # whether the client should parse user input before send
 formatCommands = True
 
-# whether a bunch of server statistics get ignored
+# whether a bunch of server statistics get ignored (filter)
 hideServerStats = True
-
-# whether the motd gets hidden
+ 
+# whether the motd gets hidden (filter)
 hideMOTD = True
 
 # whether some superfluous server commands get ignored
-disregard = True
+hideBeginsEnds = True
 
 # whether pings should be logged
 showPings = True

@@ -26,6 +26,7 @@ Implement bolding of text with ^B characters/underlining with ^_ characters
 Bold messages that appear when current nick is mentioned
 If new activity happens in other windows raising a !, tab should go over to them without cycling through other channels
 PINGs from the server are not treated as raw when they are rendered. Same for the welcome message.
+Add option to show seconds
 
 
 Wishlist
