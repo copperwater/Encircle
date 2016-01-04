@@ -1,15 +1,12 @@
 Critical issues
 =================================
 Nick filtering (block out messages)
-Resizing crashes the program
 Dealing with non-ASCII characters (CP437? Extended ASCII? Unicode?)
 
 
 Normal things
 =================================
 Different input buffers for every channel
-Joining/quitting, and other stuff happening in unviewed channels, should not be considered important enough to raise the ! (I may have done this)
-Private message windows show quits but not joins
 005 command prints out the trail only, which in freenode's case at least is merely "are supported by this server". Requires some investigation into how other servers use this command. Freenode passes the important data in the params list. Same for the 004 command, apparently.
 All /option commands should print something. There are not currently defined messages of success or failure for a lot of them. The success messages should be a setting.
 Nonstandard messages should have a safety net, a try/except probably. They should not crash the program if in an unexpected format.

@@ -747,7 +747,7 @@ def process(msg):
                              ['notice', 'you']))
 
     elif p.command == 'PONG': # user sent a ping request, I don't know why
-        addCurrChannel(0, prn(['PONG'],['notice'])) 
+        addCurrChannel(prn(['PONG'],['notice'])) 
 
     else:
         extra = True

@@ -560,7 +560,12 @@ socksend("NICK "+attemptNick)
 
 # wait for a 001 success message from the server
 while 1:
-    line = getLine()
+    try:
+        line = getLine()
+    except IOError as ioerr:
+        # this will catch window resizes that occur when waiting for the line
+        redraw()
+        continue
     
     if line is None:
         finish("Could not finish connecting to the server.", 1)
@@ -590,7 +595,13 @@ if attemptChannel != '': socksend('JOIN '+attemptChannel)
 sock_list = [sys.stdin, s]
 while True:
     # Listen for input from the socket and from stdin
-    read_socks, write_socks, err_socks = select.select(sock_list, [], [])
+    try:
+        read_socks, write_socks, err_socks = select.select(sock_list, [], [])
+    except select.error as ioerr:
+        # window resize gets caught here
+        redraw()
+        continue
+        
     for sock in read_socks:
         if sock == s:
             try:
