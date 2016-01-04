@@ -2,15 +2,12 @@ Critical issues
 =================================
 Nick filtering (block out messages)
 Resizing crashes the program
+Dealing with non-ASCII characters (CP437? Extended ASCII? Unicode?)
 
 
 Normal things
 =================================
-Change 'disregard' to 'ignoreBeginsAndEnds' everywhere in the code
-Implement the rest of the common user commands:
-/kick op-only
-/mode op-only
-/topic op-only
+Replace stuff with addToCurrAsError
 Different input buffers for every channel
 Joining/quitting, and other stuff happening in unviewed channels, should not be considered important enough to raise the ! (I may have done this)
 Private message windows show quits but not joins
@@ -18,6 +15,8 @@ Private message windows show quits but not joins
 All /option commands should print something. There are not currently defined messages of success or failure for a lot of them. The success messages should be a setting.
 Nonstandard messages should have a safety net, a try/except probably. They should not crash the program if in an unexpected format.
 Test out the INFO command (raw) on freenode
+Implement command 441: ":server 441 me them #channel :They aren't on that channel" returned when trying to /op someone whose nick existed but who was not on the channel
+Implement command 331: ":server 331 me #channel :No topic is set" when trying to do /topic when no topic was set
 
 
 Minor things
@@ -27,11 +26,14 @@ Bold messages that appear when current nick is mentioned
 If new activity happens in other windows raising a !, tab should go over to them without cycling through other channels
 PINGs from the server are not treated as raw when they are rendered. Same for the welcome message.
 Add option to show seconds
+Think about phasing out the special "you" color - it doesn't add too much to the experience, creates many extra cases, and takes up the bright cyan color which could be used by something else
+Think about changing command error messages to the format "/command: error message"
+Think about adding a new function that determines whether a "channel" (window) is actually a channel on the server.
 
 
 Wishlist
 =================================
-Add a user-specific ~/.irc_conf file that maps server/nick combinations to realname/ident combos. When a user tries to log into a server/nick combo that exists, autosupply the ident and real name (override if they are specified on the command line). This file can also be used for other defaults.
+Add a user-specific ~/.irc_conf file that maps server/nick combinations to realname/ident combos. When a user tries to log into a server/nick combo that exists, autosupply the ident and real name (override if they are specified on the command line). This file can also be used for other settings.
 Make the time limit settable as a conf file setting.
 Add a locking option/lurker mode that ignores all your input unless it is the unlocking command
 Add a command to display a list of windows.
@@ -39,4 +41,5 @@ Add an option(s) to control the visibility of joins/parts/quits/modechange/etc
 Add a command to "go to bottom". Actually, just have better navigation.
 Bell option - sound system bell when new messages come in
 Code Page 437 support?
-
+/mode greater adaptability - you *should* be able to do /mode #channel +v nick without being on that channel, but you can't now
+Add /encirclehelp as a separate command (involves creating help pages and maybe a system to display them in the program)

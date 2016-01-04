@@ -132,10 +132,7 @@ def connect(port=6667):
             print variables.server,'connection error:',errno.errcode[serr.errno]
         return False
     return True
-
-# Display a help message. Not implemented yet
-def showHelp():
-    pass
+    
     
 # Interpret a line of user input.
 # I am only implementing commands described in RFCs 1459 and 2812.
@@ -144,15 +141,13 @@ def interpret(line):
     # Check for null string
     if line == '': return
     
-    # if formatCommands = false, do no interpretation
+    # if formatCommands = false, don't interpret the input, unless it is a
+    # command to Encircle, in which case interpret it.
     if not settings.formatCommands:
-        # check for /option being used, which should switch back to normal
-        # commands
-        if line.split()[0] == '/option':
-            settings.formatCommands = True
+        # check for a / at the beginning of the line
+        if line[0] != '/':
+            socksend(line)
             return
-        socksend(line)
-        return
 
     # this will be used frequently
     ccn = elib.getCurrChannelName()
@@ -167,12 +162,11 @@ def interpret(line):
             socksend('PRIVMSG ' + ccn + ' :' + line)
             elib.addCurrChannel(elib.prn(['<',variables.currNick,'> ',line],
                                              ['you','you','you','none']))
-        return
+            return
 
-    # if command, parse it
     # annoying thing here with the parsing, it would be nice to call
-    # line.split() and use that, but if a person does /msg user "Hi  there"
-    # or something, that needs to be preserved. 
+    # line.split() and use that, but if a person does /msg someone Hi  there
+    # or something, those spaces need to be preserved. 
     cmdlist = line.split(" ")
     noempty = line.split() # for space-independent commands
     command = cmdlist[0]
@@ -239,7 +233,15 @@ def interpret(line):
             socksend('AWAY '+' '.join(cmdlist[1:]))
 
     elif command == '/help':
-        showHelp()
+        elib.addCurrChannel(
+            elib.prn(['Encircle help pages are not implemented yet. Look up the Encircle project at http://github.com/aosdict/Encircle for its documentation.'], ['notice']))
+        elib.addCurrChannel(elib.prn(['Use /serverhelp to send a HELP command to the server to access its help pages.'], ['notice']))
+
+    elif command == '/serverhelp':
+        if len(noempty) == 2:
+            socksend('HELP '+noempty[1])
+        else:
+            socksend('HELP')
 
     elif command == '/whois':
         if len(noempty) != 2:
@@ -260,7 +262,7 @@ def interpret(line):
                                              ['error']))
             return
             
-        if noempty[1] == 'pings':
+        elif noempty[1] == 'pings':
             if len(noempty) == 2:
                 settings.showPings = not settings.showPings
             else:
@@ -269,68 +271,120 @@ def interpret(line):
                 elif noempty[2] == 'off':
                     settings.showPings == False
 
-        if noempty[1] == 'format-output':
+        elif noempty[1] == 'format-output':
             if len(noempty) == 3:
                 if noempty[2] == 'on':
                     settings.formatOutput = True
                 elif noempty[2] == 'off':
                     settings.formatOutput = False
+            else:
+                settings.formatOutput = not settings.formatOutput
 
-        if noempty[1] == 'format-commands':
+        elif noempty[1] == 'format-commands':
             if len(noempty) == 3:
                 if noempty[2] == 'on':
                     settings.formatCommands = True
                 elif noempty[2] == 'off':
                     settings.formatCommands = False
+            else:
+                settings.formatCommands = not settings.formatCommands
                     
 
-        if noempty[1] == 'nonstandard':
+        elif noempty[1] == 'nonstandard':
             if len(noempty) == 3:
                 if noempty[2] == 'on':
                     settings.ignoreNonstandard = False
                 elif noempty[2] == 'off':
                     settings.ignoreNonstandard = True
 
-        if noempty[1] == 'time':
+        elif noempty[1] == 'time':
             settings.showTime = not settings.showTime
             redraw()
+
+        else:
+            elib.addCurrChannel(elib.prn(['Unrecognized option ', noempty[1]],
+                                         ['error', 'error']))
             
     elif command == '/mode':
+        # In general, using /mode with a nick won't work unless you're an
+        # IRC Op, unless it's your own nick.
         if len(noempty) < 3:
             elib.addCurrChannel(elib.prn([
-                'Format: /mode channel (+/-)modes [parameters]', '\n',
-                'Run /help mode for more information on modes and parameters.'],
-                                             ['error','error','error']))
+                'Format: /mode (channel|nick) (+/-)modes [parameters]\nRun /serverhelp mode for more information on modes and parameters.'],
+                                         ['error']))
+        if len(noempty) > 3:
+            # has parameters
+            socksend('MODE '+noempty[1]+' '+noempty[2]+' '+(' '.join(noempty[3:])))
+        else:
+            socksend('MODE '+noempty[1]+' '+noempty[2]);
+            
 
     elif command == '/names':
         if len(noempty) == 1:
             socksend('NAMES '+elib.getCurrChannelName())
         elif len(noempty) == 2:
             socksend('NAMES '+noempty[1])
+
+    elif command == '/topic':
+        if variables.currChannel == 0:
+            elib.addNumChannel(0, elib.prn(['/topic: This is not a channel'],
+                                           ['error']))
+        else:
+            if len(noempty) == 1:
+                # get current topic
+                socksend('TOPIC '+elib.getCurrChannelName())
+            else:
+                # set current topic
+                socksend('TOPIC '+elib.getCurrChannelName()+' :'+' '.join(cmdlist[1:]))
         
     elif command == '/invite': # operator only command
-        pass
+        if (variables.currChannel == 0 or
+            variables.chanlist[variables.currChannel].isQuery):
+            elib.addToCurrAsError("You can't do this outside a channel")
+        elif len(noempty) != 2:
+            elib.addToCurrAsError('Format: /invite person')
+        else:
+            # will assume current channel
+            socksend('INVITE '+noempty[1]+' '+elib.getCurrChannelName())
 
     elif command == '/kick': # operator only command
-        pass
-
+        if (variables.currChannel == 0 or
+            variables.chanlist[variables.currChannel].isQuery):
+            elib.addToCurrAsError("You can't do this outside a channel")
+        elif len(noempty) < 2:
+            elib.addToCurrAsError('Format: /kick person [message]')
+        else:
+            # will assume current channel
+            socksend('KICK '+elib.getCurrChannelName()+' '+noempty[1]+' :'+' '.join(cmdlist[2:]))
+            
     elif command == '/notice':
         if len(cmdlist) < 3:
             elib.addCurrChannel(elib.prn(['Format: /notice target message'],
-                                             ['error']))
-        tail = ' '.join(cmdlist[2:])
-        socksend('NOTICE '+cmdlist[1]+' :'+tail)
-
+                                         ['error']))
+        else:
+            socksend('NOTICE '+cmdlist[1]+' :'+' '.join(cmdlist[2:]))
+            
     elif command == '/motd':
-        pass
+        # user is trying to see motd, so turn hideMOTD off
+        settings.hideMOTD = False
+        if len(noempty) == 2:
+            socksend('MOTD '+noempty[1])
+        else:
+            socksend('MOTD')
 
     elif command == '/op': # operator only command
-        pass
+        # /op someNick is equivalent to /mode #currChannel +o someNick
+        if (variables.currChannel == 0 or
+            variables.chanlist[variables.currChannel].isQuery):
+            elib.addToCurrAsError("You can't do this outside a channel")
+        elif len(noempty) != 2:
+            elib.addToCurrAsError('Format: /op nick')
+        else:
+            socksend('MODE '+elib.getCurrChannelName()+' +o '+noempty[1])
 
     elif command == '/list':
         if len(noempty) > 2:
-            elib.addCurrChannel(elib.prn(['Format: /list [channel]'],
-                                             ['error']))
+            elib.addToCurrAsError('Format: /list [channel]')
             return
         elif len(noempty) == 2:
             socksend('LIST '+noempty[1])
@@ -340,7 +394,7 @@ def interpret(line):
         finish('', 0, 'RAGEQUIT')
         
     elif command == '/ping':
-        pass
+        socksend('PING :Ping')
 
     elif command == '/admin':
         socksend('ADMIN')

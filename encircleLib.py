@@ -186,6 +186,14 @@ def addNamedChannel(name, msg):
     x = getChannelNumber(name)
     addNumChannel(x, msg)
 
+# Inserts a new prn object into the current channel, using only one string,
+# formatted as an error.
+# This exists because there are a lot of error cases that get added to the
+# current channel and addCurrChannel(prn([blahblah],['error'])) takes a lot of
+# space.
+def addToCurrAsError(msg):
+    addCurrChannel(prn([msg],['error']))
+
 #
 # FUNCTIONS FOR PARSING RECEIVED IRC MESSAGES
 # extractName, isAction, parse
@@ -372,7 +380,7 @@ def process(msg):
         important = (target == variables.currNick)
             
         if len(p.trail) > 0:
-            addNumChannel(0, prn([target, ' mode change: ', p.trail],
+            addCurrChannel(prn([target, ' mode change: ', p.trail],
                                  ['nick', 'notice', 'notice'], important))
             return
         else:
@@ -599,7 +607,7 @@ def process(msg):
 
     elif p.command == '341': # invite sent successfully
         addNamedChannel(p.params[2],
-                        prn(['Invited ', p.params[1], ' to ', p.params[2]],
+                        prn(['You invited ', p.params[1], ' to ', p.params[2]],
                             ['notice', 'nick', 'notice', 'channel']))
         
     elif p.command == '353': # names list
@@ -713,10 +721,10 @@ def process(msg):
                            ['notice', 'channel', 'notice']))
 
     elif p.command == '481': # not enough privileges
-        addCurrChannel(prn([p.trail], ['error']))
+        addCurrChannel(prn(['Privileges needed: '+p.trail], ['error']))
         
-    elif p.command == '482': # privileges needed
-        addCurrChannel(prn([p.trail], ['error']))
+    elif p.command == '482': # channel privileges needed
+        addCurrChannel(prn(['Channel privileges needed: '+p.trail], ['error']))
 
     elif p.command == '501': # unknown mode flag
         addCurrChannel(prn(['Unrecognized mode flag'], ['error']))
@@ -727,7 +735,7 @@ def process(msg):
 
     elif p.command == '524': # help page not found
         addCurrChannel(prn([p.params[1], ' help page not found'],
-                           ['error'],['error']))
+                           ['error', 'error']))
 
     elif p.command == '671': # nonstandard is using a secure connection
         if not settings.ignoreNonstandard:
@@ -749,7 +757,7 @@ def process(msg):
                              ['notice', 'you']))
 
     elif p.command == 'PONG': # user sent a ping request, I don't know why
-        addNumChannel(0, 'PONG') 
+        addCurrChannel(0, prn(['PONG'],['notice'])) 
 
     else:
         extra = True
