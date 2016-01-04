@@ -7,7 +7,6 @@ Dealing with non-ASCII characters (CP437? Extended ASCII? Unicode?)
 
 Normal things
 =================================
-Replace stuff with addToCurrAsError
 Different input buffers for every channel
 Joining/quitting, and other stuff happening in unviewed channels, should not be considered important enough to raise the ! (I may have done this)
 Private message windows show quits but not joins

@@ -505,8 +505,7 @@ def process(msg):
         addNumChannel(0, prn([p.trail], ['notice']))
 
     elif p.command == '263': # server dropped command without completing it
-        addCurrChannel(prn([p.params[1], ': ', p.trail],
-                           ['error', 'error', 'error']))
+        addToCurrAsError(p.params[1] + ': ' + p.trail)
         
     elif p.command == '265': # local users nonstandard
         if not (settings.hideServerStats or settings.ignoreNonstandard):
@@ -656,52 +655,47 @@ def process(msg):
                                ['nick', 'notice', 'notice']))
 
     elif p.command == '401': # no such nick
-        addCurrChannel(prn([p.params[1] + ': No such nick'], ['error']))
+        addToCurrAsError(p.params[1] + ': No such nick')
 
     elif p.command == '402': # no such server
-        addCurrChannel(prn([p.params[1] + ': No such server'], ['error']))
+        addToCurrAsError(p.params[1] + ': No such server')
         
     elif p.command == '403': # no such channel
-        addCurrChannel(prn([p.params[1] + ': No such channel'], ['error']))
+        addToCurrAsError(p.params[1] + ': No such channel')
 
     elif p.command == '404': # cannot send to channel (no voice, etc)
-        addCurrChannel(prn(['Cannot send to channel ' + p.params[1]],
-                           ['error', 'error']))
+        addToCurrAsError('Cannot send to channel ' + p.params[1])
 
     elif p.command == '406': # there was no such nick
-        addCurrChannel(prn([p.params[1] + ' never existed'], ['error']))
+        addToCurrAsError(p.params[1] + ' never existed')
 
     elif p.command == '411': # no recipient
-        addCurrChannel(prn(['No recipient given'], ['error']))
+        addToCurrAsError('No recipient given')
         
     elif p.command == '412': # no text to send
-        addCurrChannel(prn(['No text to send'], ['error']))
+        addToCurrAsError('No text to send')
 
     elif p.command == '421': # unknown command
-        addCurrChannel(prn(['Unknown command'], ['error']))
+        addToCurrAsError('Unknown command')
 
     elif p.command == '432': # erroneous nickname
-        addCurrChannel(prn(['Erroneous nickname ', p.params[1]],
-                           ['error', 'error']))
+        addToCurrAsError('Erroneous nickname ' + p.params[1])
 
     elif p.command == '433': # nickname already in use
         addCurrChannel(prn(['Nickname ', p.params[1], ' is already in use.'],
                            ['error', 'nick', 'error']))
 
     elif p.command == '442': # not on channel
-        addCurrChannel(prn(["You're not on ", p.params[1]],
-                           ['error', 'error']))
+        addToCurrAsError("You're not on " + p.params[1])
 
     elif p.command == '443': # already on channel
-        addCurrChannel(prn(["You're already on ", p.params[1]],
-                           ['error', 'error']))
+        addToCurrAsError("You're already on " + p.params[1])
 
     elif p.command == '461': # not enough parameters
-        addCurrChannel(prn([p.params[1], ': Not enough parameters'],
-                           ['error', 'error']))
+        addToCurrAsError(p.params[1] + ': Not enough parameters')
 
     elif p.command == '462': # already registered
-        addCurrChannel(prn(['You have already signed in'], ['error']))
+        addToCurrAsError('You have already signed in')
 
     elif p.command == '470': # forwarding you to another channel
         addNumChannel(0, prn(["Forwarding you from ", p.params[1], ' to ',
@@ -709,33 +703,29 @@ def process(msg):
                              ['notice','notice','notice','notice']));
 
     elif p.command == '471': # channel is full
-        addCurrChannel(prn([p.params[1], ' is full'],
-                           ['error', 'error']))
+        addToCurrAsError(p.params[1] + ' is full')
         
     elif p.command == '472': # unknown mode
-        addCurrChannel(prn(['Unknown mode character: ', p.params[1]],
-                           ['error', 'error']))
+        addToCurrAsError('Unknown mode character: ' + p.params[1])
 
     elif p.command == '473': # channel is invite only
         addCurrChannel(prn(['Channel ', p.params[1], ' is invite-only'],
                            ['notice', 'channel', 'notice']))
 
     elif p.command == '481': # not enough privileges
-        addCurrChannel(prn(['Privileges needed: '+p.trail], ['error']))
+        addToCurrAsError('Privileges needed: '+p.trail)
         
     elif p.command == '482': # channel privileges needed
-        addCurrChannel(prn(['Channel privileges needed: '+p.trail], ['error']))
+        addToCurrAsError('Channel privileges needed: '+p.trail)
 
     elif p.command == '501': # unknown mode flag
-        addCurrChannel(prn(['Unrecognized mode flag'], ['error']))
+        addToCurrAsError('Unrecognized mode flag')
 
     elif p.command == '502': # can't see or change mode of other users
-        addCurrChannel(prn(["You can't see or change the mode of other users"],
-                           ['error']))
+        addToCurrAsError("You can't see or change the mode of other users")
 
     elif p.command == '524': # help page not found
-        addCurrChannel(prn([p.params[1], ' help page not found'],
-                           ['error', 'error']))
+        addToCurrAsError(p.params[1] + ' help page not found')
 
     elif p.command == '671': # nonstandard is using a secure connection
         if not settings.ignoreNonstandard:

@@ -156,8 +156,7 @@ def interpret(line):
     # if not, default to sending a PRIVMSG to the current channel
     if line[0] != '/':
         if variables.currChannel == 0:
-            elib.addCurrChannel(elib.prn(['You are not on a channel'],
-                                             ['error']))
+            elib.addToCurrAsError('You are not on a channel')
         else:
             socksend('PRIVMSG ' + ccn + ' :' + line)
             elib.addCurrChannel(elib.prn(['<',variables.currNick,'> ',line],
@@ -174,8 +173,7 @@ def interpret(line):
     if command == '/msg':
         tail = ' '.join(cmdlist[2:])
         if len(tail) == 0 or tail.isspace():
-            elib.addCurrChannel(elib.prn(['Format: /msg user message'],
-                                             ['error']))
+            elib.addToCurrAsError('Format: /msg user message')
             return
         socksend("PRIVMSG " + cmdlist[1] + " :" + tail)
         # This creates a new private window like a query
@@ -194,8 +192,7 @@ def interpret(line):
         
     elif command == '/join':
         if len(noempty) != 2:
-            elib.addCurrChannel(elib.prn(['Format: /join channel'],
-                                             ['error']))
+            elib.addToCurrAsError('Format: /join channel')
             return
         socksend('JOIN '+noempty[1])
 
@@ -203,8 +200,7 @@ def interpret(line):
                               
         if len(noempty) == 1:
             if variables.currChannel == 0:
-                elib.addCurrChannel(elib.prn(['This is not a channel'],
-                                                 ['error']))
+                elib.addToCurrAsError('This is not a channel')
                 return
             elif variables.chanlist[variables.currChannel].isQuery:
                 elib.eraseChannel(ccn)
@@ -212,8 +208,7 @@ def interpret(line):
                 return
             socksend('PART '+ccn)
         else:
-            elib.addCurrChannel(elib.prn(['Format: /part'],
-                                             ['error']))
+            elib.addToCurrAsError('Format: /part')
 
     elif command == '/quit':
         tail = ' '.join(cmdlist[1:])
@@ -221,8 +216,7 @@ def interpret(line):
         
     elif command == '/nick':
         if len(noempty) != 2:
-            elib.addCurrChannel(elib.prn(['Format: /nick newnick'],
-                                             ['error']))
+            elib.addToCurrAsError('Format: /nick newnick')
             return
         socksend('NICK '+noempty[1])
 
@@ -245,21 +239,20 @@ def interpret(line):
 
     elif command == '/whois':
         if len(noempty) != 2:
-            elib.addCurrChannel(elib.prn(['Format: /whois nick'],['error']))
+            elib.addToCurrAsError('Format: /whois nick')
             return
         socksend('WHOIS '+noempty[1])
 
     elif command == '/query':
         if len(noempty) != 2:
-            elib.addCurrChannel(elib.prn(['Format: /query nick'],['error']))
+            elib.addToCurrAsError('Format: /query nick')
             return
         new = elib.insertChannel(noempty[1], True)
         variables.currChannel = new
 
     elif command == '/option':
         if len(noempty) < 2:
-            elib.addCurrChannel(elib.prn(['Format: /option arg1 [arg2...]'],
-                                             ['error']))
+            elib.addToCurrAsError('Format: /option arg1 [arg2...]')
             return
             
         elif noempty[1] == 'pings':
@@ -302,16 +295,13 @@ def interpret(line):
             redraw()
 
         else:
-            elib.addCurrChannel(elib.prn(['Unrecognized option ', noempty[1]],
-                                         ['error', 'error']))
+            elib.addToCurrAsError('Unrecognized option '+noempty[1])
             
     elif command == '/mode':
         # In general, using /mode with a nick won't work unless you're an
         # IRC Op, unless it's your own nick.
         if len(noempty) < 3:
-            elib.addCurrChannel(elib.prn([
-                'Format: /mode (channel|nick) (+/-)modes [parameters]\nRun /serverhelp mode for more information on modes and parameters.'],
-                                         ['error']))
+            elib.addToCurrAsError('Format: /mode (channel|nick) (+/-)modes [parameters]\nRun /serverhelp mode for more information on modes and parameters.')
         if len(noempty) > 3:
             # has parameters
             socksend('MODE '+noempty[1]+' '+noempty[2]+' '+(' '.join(noempty[3:])))
@@ -359,8 +349,7 @@ def interpret(line):
             
     elif command == '/notice':
         if len(cmdlist) < 3:
-            elib.addCurrChannel(elib.prn(['Format: /notice target message'],
-                                         ['error']))
+            elib.addToCurrAsError('Format: /notice target message')
         else:
             socksend('NOTICE '+cmdlist[1]+' :'+' '.join(cmdlist[2:]))
             
@@ -403,8 +392,7 @@ def interpret(line):
         settings.formatCommands = not settings.formatCommands
 
     else:
-        elib.addCurrChannel(elib.prn(['Unrecognized command ', command],
-                                         ['error', 'error']))
+        elib.addToCurrAsError('Unrecognized command '+command)
 
 # Formats a nickname
 def fmtNick(nick):
@@ -624,7 +612,7 @@ while True:
                 
             elif data[:5] == 'ERROR':
                 # something very bad is happening
-                elib.addCurrChannel(elib.prn([data],['error']))
+                elib.addToCurrAsError(elib.prn([data],['error']))
                 
             else:
                 elib.process(data)
