@@ -183,7 +183,7 @@ def interpret(line):
                                              ['you', 'none']))
         
     elif command == '/me':
-        # Format for /me commands wraps the message in ^A characters and
+        # Format for /me commands wraps the message in ^A (0x01) characters and
         # puts ACTION at the beginning (?)
         tail = ' '.join(cmdlist[1:])
         socksend('PRIVMSG ' + ccn + ' :' + chr(1) + 'ACTION ' + tail + chr(1))
@@ -196,8 +196,7 @@ def interpret(line):
             return
         socksend('JOIN '+noempty[1])
 
-    elif command == '/part':
-                              
+    elif command == '/part':   
         if len(noempty) == 1:
             if variables.currChannel == 0:
                 elib.addToCurrAsError('This is not a channel')
@@ -211,8 +210,7 @@ def interpret(line):
             elib.addToCurrAsError('Format: /part')
 
     elif command == '/quit':
-        tail = ' '.join(cmdlist[1:])
-        finish('', 0, tail)
+        finish('', 0, ' '.join(cmdlist[1:]))
         
     elif command == '/nick':
         if len(noempty) != 2:
@@ -240,21 +238,24 @@ def interpret(line):
     elif command == '/whois':
         if len(noempty) != 2:
             elib.addToCurrAsError('Format: /whois nick')
-            return
-        socksend('WHOIS '+noempty[1])
+        else:
+            socksend('WHOIS '+noempty[1])
 
     elif command == '/query':
         if len(noempty) != 2:
             elib.addToCurrAsError('Format: /query nick')
-            return
-        new = elib.insertChannel(noempty[1], True)
-        variables.currChannel = new
+        elif noempty[1][0] == "#":
+            # sneaky person trying to open a query to a channel
+            elib.addToCurrAsError('Queries can only be opened to nicks, not channels')
+        else:
+            new = elib.insertChannel(noempty[1], True)
+            elib.addNumChannel(new, elib.prn(['Opened a direct messaging window with ', noempty[1]],
+                                             ['notice', 'nick']))
+            variables.currChannel = new
 
     elif command == '/option':
         if len(noempty) < 2:
-            elib.addToCurrAsError('Format: /option arg1 [arg2...]')
-            return
-            
+            elib.addToCurrAsError('Format: /option arg1 [arg2...]')            
         elif noempty[1] == 'pings':
             if len(noempty) == 2:
                 settings.showPings = not settings.showPings
@@ -263,6 +264,9 @@ def interpret(line):
                     settings.showPings = True
                 elif noempty[2] == 'off':
                     settings.showPings == False
+            dispstr = ('on' if settings.showPings else 'off')
+            elib.addCurrChannel(elib.prn(['Turned ping display '+dispstr],
+                                         ['notice']))
 
         elif noempty[1] == 'format-output':
             if len(noempty) == 3:
@@ -272,6 +276,9 @@ def interpret(line):
                     settings.formatOutput = False
             else:
                 settings.formatOutput = not settings.formatOutput
+            dispstr = ('on' if settings.formatOutput else 'off')
+            elib.addCurrChannel(elib.prn(['Turned output formatting '+dispstr],
+                                         ['notice']))
 
         elif noempty[1] == 'format-commands':
             if len(noempty) == 3:
@@ -281,6 +288,9 @@ def interpret(line):
                     settings.formatCommands = False
             else:
                 settings.formatCommands = not settings.formatCommands
+            dispstr = ('on' if settings.formatCommands else 'off')
+            elib.addCurrChannel(elib.prn(['Turned input formatting '+dispstr],
+                                         ['notice']))
                     
 
         elif noempty[1] == 'nonstandard':
@@ -289,6 +299,11 @@ def interpret(line):
                     settings.ignoreNonstandard = False
                 elif noempty[2] == 'off':
                     settings.ignoreNonstandard = True
+            else:
+                settings.ignoreNonstandard = not settings.ignoreNonstandard
+            dispstr = ('ignoring' if settings.ignoreNonstandard else 'showing')
+            elib.addCurrChannel(elib.prn(['Now '+dispstr+' nonstandard messages'],
+                                         ['notice']))
 
         elif noempty[1] == 'time':
             settings.showTime = not settings.showTime
@@ -378,7 +393,10 @@ def interpret(line):
         if len(cmdlist) < 3:
             elib.addToCurrAsError('Format: /notice target message')
         else:
-            socksend('NOTICE '+cmdlist[1]+' :'+' '.join(cmdlist[2:]))
+            tail = ' '.join(cmdlist[2:])
+            elib.addCurrChannel(elib.prn([variables.currNick, ' notice: '+tail],
+                                         ['you', 'notice']))
+            socksend('NOTICE '+cmdlist[1]+' :'+tail)
             
     elif command == '/motd':
         # user is trying to see motd, so turn hideMOTD off
