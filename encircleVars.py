@@ -14,3 +14,6 @@ currChannel = 0
 
 # list of all channels. 0 is the "server" window and is not a channel, and this list may also include queries for direct messaging.
 chanlist = []
+
+# list of blocked nicks. If a message comes in from a blocked nick, do not display it.
+blockedNicks = []

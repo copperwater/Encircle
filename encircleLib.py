@@ -257,11 +257,16 @@ def process(msg):
     extra = False # flag for debugging/unknown messages
     
     if p.command == 'PRIVMSG':
+        # get sender's name first; they might be blocked
+        sender = p.getName()
+        if sender in variables.blockedNicks:
+            return
+        
         # params[0] is either channel name or current nick
         if p.params[0] == variables.currNick:
             # someone sent a PM directly to the user
             # should open a query window with them
-            n = insertChannel(p.getName(), True)
+            n = insertChannel(sender, True)
         else:
             # normal message to channel, just get its number
             n = getChannelNumber(p.params[0])
@@ -269,15 +274,15 @@ def process(msg):
         # query or not, the message printout is the same
         # check for /me command formatting
         if p.trail[0] == chr(1) and p.trail[-1] == chr(1):
-            addNumChannel(n, prn([p.getName(), p.trail[7:-1]],
+            addNumChannel(n, prn([sender, p.trail[7:-1]],
                                  ['nick', 'none'], True))
         else:
-            addNumChannel(n, prn(['<' + p.getName() + '> ', p.trail],
+            addNumChannel(n, prn(['<' + sender + '> ', p.trail],
                                  ['nick', 'none'], True))
 
     elif p.command == 'NICK':
-        # This should autoscan all active channel name lists and place the
-        # changed nick message in any channel that the previous name was on
+        # This autoscans all active channel name lists and places the
+        # changed nick message in any channel that the previous name was on.
 
         # The IRC protocol does not play nice with people changing their
         # nick while in a query window. The other person is not notified unless
@@ -311,6 +316,11 @@ def process(msg):
                     c.removeUser(n)
                     c.addUser(newNick)
                     addChannel(c, msg)
+            # If the person changing nick has been blocked, change the nick in
+            # the blocked list to match the new one.
+            if n in variables.blockedNicks:
+                index = variables.blockedNicks.index(n)
+                variables.blockedNicks[index] = newNick
         
     elif p.command == 'JOIN':
         n = p.getName()

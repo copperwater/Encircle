@@ -187,8 +187,8 @@ def interpret(line):
         # puts ACTION at the beginning (?)
         tail = ' '.join(cmdlist[1:])
         socksend('PRIVMSG ' + ccn + ' :' + chr(1) + 'ACTION ' + tail + chr(1))
-        elib.addCurrChannel(elib.prn(['[', variables.currNick, ' ' + tail + ']'],
-                                         ['none', 'you', 'none']))
+        elib.addCurrChannel(elib.prn([variables.currNick, ' ' + tail],
+                                         ['you', 'none']))
         
     elif command == '/join':
         if len(noempty) != 2:
@@ -326,6 +326,33 @@ def interpret(line):
             else:
                 # set current topic
                 socksend('TOPIC '+elib.getCurrChannelName()+' :'+' '.join(cmdlist[1:]))
+
+    elif command == '/block':
+        # Block the person by adding them to the list of blocked names
+        # Don't allow self-blocking
+        if len(noempty) != 2:
+            addToCurrAsError('Format: /block nick')
+        elif noempty[1] == variables.currNick:
+            addToCurrAsError("You can't block yourself")
+        elif noempty[1] in variables.blockedNicks:
+            addToCurrAsError('That nick is already being blocked')
+        else:
+            variables.blockedNicks.append(noempty[1])
+            # notify user that they've been blocked
+            elib.addCurrChannel(elib.prn(['You are now blocking ', noempty[1]],
+                                         ['notice', 'nick']))
+            socksend('PRIVMSG '+noempty[1]+' :'+variables.currNick+" is now blocking you. Don't bother responding; you won't be heard.")
+
+    elif command == '/unblock':
+        # Remove the person from the list of blocked names
+        if len(noempty) != 2:
+            addToCurrAsError('Format: /unblock nick')
+        elif not noempty[1] in variables.blockedNicks:
+            addToCurrAsError(noempty[1]+' is not in the list of blocked nicks')
+        else:
+            elib.addCurrChannel(elib.prn(['No longer blocking ', noempty[1]],
+                                         ['notice', 'nick']))
+            variables.blockedNicks.remove(noempty[1])
         
     elif command == '/invite': # operator only command
         if (variables.currChannel == 0 or

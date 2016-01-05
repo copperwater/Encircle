@@ -1,6 +1,5 @@
 Critical issues
 =================================
-Nick filtering (block out messages)
 Dealing with non-ASCII characters (CP437? Extended ASCII? Unicode?)
 
 
@@ -13,6 +12,7 @@ Nonstandard messages should have a safety net, a try/except probably. They shoul
 Test out the INFO command (raw) on freenode
 Implement command 441: ":server 441 me them #channel :They aren't on that channel" returned when trying to /op someone whose nick existed but who was not on the channel
 Implement command 331: ":server 331 me #channel :No topic is set" when trying to do /topic when no topic was set
+/knock or IRC KNOCK command
 
 
 Minor things
@@ -25,6 +25,7 @@ Add option to show seconds
 Think about phasing out the special "you" color - it doesn't add too much to the experience, creates many extra cases, and takes up the bright cyan color which could be used by something else
 Think about changing command error messages to the format "/command: error message"
 Think about adding a new function that determines whether a "channel" (window) is actually a channel on the server.
+Add setting to control notifying other people when you block them: you can 1) post a message to channels you're both in; 2) post a message to them directly, or 3) post nothing.
 
 
 Wishlist
