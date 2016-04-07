@@ -20,7 +20,7 @@ nameWidth = 12
 scrollPos = 0
 
 # Resets the window after user input or update
-def redraw():       
+def redraw():
     window.clear()
     global dimensions
     dimensions = window.getmaxyx()     #refresh dimensions
@@ -54,7 +54,7 @@ def redraw():
 
     # Calculate the number of lines in the user input line
     inputVertical = len(inputStr) // dimensions[1]
-        
+
     # Print strings backwards from bottom line
     chanList = variables.chanlist[variables.currChannel].msgs
     strpos = dimensions[0] - 3 - inputVertical
@@ -64,7 +64,7 @@ def redraw():
         if scrollCtr < scrollPos:
             scrollCtr += 1
             continue
-            
+
         # Subtract the number of overflow lines from strpos
         strpos -= prn.getOverflowLines(dimensions[1])
 
@@ -88,7 +88,7 @@ def redraw():
                 window.addstr(tmpstrpos, 0, '') #curses.setsyx(tmpstrpos,0)
                 continue
             if st.isspace(): continue
-            
+
             window.addstr(st, stylemap[ty])
         strpos -= 1
 
@@ -107,11 +107,11 @@ def socksend(string):
     s.send(string+"\r\n")
 
 # Get a single line from the IRC server
-def getLine(): 
+def getLine():
     tmp=s.recv(1)
     if not tmp: # connection closed
         return None
-        
+
     while '\n' not in tmp:
         tmp += s.recv(1)
     tmp = tmp.rstrip('\r\n')
@@ -132,15 +132,15 @@ def connect(port=6667):
             print variables.server,'connection error:',errno.errcode[serr.errno]
         return False
     return True
-    
-    
+
+
 # Interpret a line of user input.
 # I am only implementing commands described in RFCs 1459 and 2812.
 # freenode has a lot of nonstandard ones.
 def interpret(line):
     # Check for null string
     if line == '': return
-    
+
     # if formatCommands = false, don't interpret the input, unless it is a
     # command to Encircle, in which case interpret it.
     if not settings.formatCommands:
@@ -165,7 +165,7 @@ def interpret(line):
 
     # annoying thing here with the parsing, it would be nice to call
     # line.split() and use that, but if a person does /msg someone Hi  there
-    # or something, those spaces need to be preserved. 
+    # or something, those spaces need to be preserved.
     cmdlist = line.split(" ")
     noempty = line.split() # for space-independent commands
     command = cmdlist[0]
@@ -181,7 +181,7 @@ def interpret(line):
         variables.currChannel = new
         elib.addNumChannel(new, elib.prn(['<'+variables.currNick+'> ', tail],
                                              ['you', 'none']))
-        
+
     elif command == '/me':
         # Format for /me commands wraps the message in ^A (0x01) characters and
         # puts ACTION at the beginning (?)
@@ -189,14 +189,14 @@ def interpret(line):
         socksend('PRIVMSG ' + ccn + ' :' + chr(1) + 'ACTION ' + tail + chr(1))
         elib.addCurrChannel(elib.prn([variables.currNick, ' ' + tail],
                                          ['you', 'none']))
-        
+
     elif command == '/join':
         if len(noempty) != 2:
             elib.addToCurrAsError('Format: /join channel')
             return
         socksend('JOIN '+noempty[1])
 
-    elif command == '/part':   
+    elif command == '/part':
         if len(noempty) == 1:
             if variables.currChannel == 0:
                 elib.addToCurrAsError('This is not a channel')
@@ -211,7 +211,7 @@ def interpret(line):
 
     elif command == '/quit':
         finish('', 0, ' '.join(cmdlist[1:]))
-        
+
     elif command == '/nick':
         if len(noempty) != 2:
             elib.addToCurrAsError('Format: /nick newnick')
@@ -255,7 +255,7 @@ def interpret(line):
 
     elif command == '/option':
         if len(noempty) < 2:
-            elib.addToCurrAsError('Format: /option arg1 [arg2...]')            
+            elib.addToCurrAsError('Format: /option arg1 [arg2...]')
         elif noempty[1] == 'pings':
             if len(noempty) == 2:
                 settings.showPings = not settings.showPings
@@ -291,7 +291,7 @@ def interpret(line):
             dispstr = ('on' if settings.formatCommands else 'off')
             elib.addCurrChannel(elib.prn(['Turned input formatting '+dispstr],
                                          ['notice']))
-                    
+
 
         elif noempty[1] == 'nonstandard':
             if len(noempty) == 3:
@@ -311,18 +311,19 @@ def interpret(line):
 
         else:
             elib.addToCurrAsError('Unrecognized option '+noempty[1])
-            
+
     elif command == '/mode':
         # In general, using /mode with a nick won't work unless you're an
-        # IRC Op, unless it's your own nick.
+        # IRC Op or it's your own nick.
         if len(noempty) < 3:
             elib.addToCurrAsError('Format: /mode (channel|nick) (+/-)modes [parameters]\nRun /serverhelp mode for more information on modes and parameters.')
-        if len(noempty) > 3:
+        elif len(noempty) > 3:
             # has parameters
             socksend('MODE '+noempty[1]+' '+noempty[2]+' '+(' '.join(noempty[3:])))
         else:
+            # 3 parameters
             socksend('MODE '+noempty[1]+' '+noempty[2]);
-            
+
 
     elif command == '/names':
         if len(noempty) == 1:
@@ -368,7 +369,7 @@ def interpret(line):
             elib.addCurrChannel(elib.prn(['No longer blocking ', noempty[1]],
                                          ['notice', 'nick']))
             variables.blockedNicks.remove(noempty[1])
-        
+
     elif command == '/invite': # operator only command
         if (variables.currChannel == 0 or
             variables.chanlist[variables.currChannel].isQuery):
@@ -388,7 +389,7 @@ def interpret(line):
         else:
             # will assume current channel
             socksend('KICK '+elib.getCurrChannelName()+' '+noempty[1]+' :'+' '.join(cmdlist[2:]))
-            
+
     elif command == '/notice':
         if len(cmdlist) < 3:
             elib.addToCurrAsError('Format: /notice target message')
@@ -397,7 +398,7 @@ def interpret(line):
             elib.addCurrChannel(elib.prn([variables.currNick, ' notice: '+tail],
                                          ['you', 'notice']))
             socksend('NOTICE '+cmdlist[1]+' :'+tail)
-            
+
     elif command == '/motd':
         # user is trying to see motd, so turn hideMOTD off
         settings.hideMOTD = False
@@ -426,7 +427,7 @@ def interpret(line):
 
     elif command == '/ragequit': # kind of a joke but here it is
         finish('', 0, 'RAGEQUIT')
-        
+
     elif command == '/ping':
         socksend('PING :Ping')
 
@@ -459,7 +460,7 @@ def signalHandler(signal, frame):
     # conf file read and set settings
 attemptServer=''
 attemptNick=''
-    
+
 def readConfFile(filename=os.path.expanduser("~/.irc_conf")):
     ctr=1
     with open(filename, "r") as f:
@@ -473,7 +474,7 @@ def readConfFile(filename=os.path.expanduser("~/.irc_conf")):
             else:
                 print 'Warning: line', ctr, "of config file is invalid"
 
-            ctr += 1 
+            ctr += 1
 
 readConfFile()
 sys.exit(0)
@@ -611,10 +612,10 @@ while 1:
         # this will catch window resizes that occur when waiting for the line
         redraw()
         continue
-    
+
     if line is None:
         finish("Could not finish connecting to the server.", 1)
-            
+
     results = elib.parse(line)
     if results.command == "001":
         # hooray, success!
@@ -634,9 +635,9 @@ while 1:
 
     elib.process(line);
     redraw()
-    
+
 if attemptChannel != '': socksend('JOIN '+attemptChannel)
-    
+
 sock_list = [sys.stdin, s]
 while True:
     # Listen for input from the socket and from stdin
@@ -646,7 +647,7 @@ while True:
         # window resize gets caught here
         redraw()
         continue
-        
+
     for sock in read_socks:
         if sock == s:
             try:
@@ -658,30 +659,30 @@ while True:
 
             if data is None:
                 finish('Connection terminated', 1, 'Connection terminated')
-        
+
             elif data[:4] == "PING":
                 socksend('PONG :Pong')
                 if settings.showPings:
                     elib.addNumChannel(0, elib.prn(['PING at '+time.strftime('%H:%M:%S')],['notice']))
                     redraw()
                 continue
-                
+
             elif data[:5] == 'ERROR':
                 # something very bad is happening
                 elib.addToCurrAsError(elib.prn([data],['error']))
-                
+
             else:
                 elib.process(data)
-                
+
             redraw()
-            
+
         else:
             inputVertical = len(inputStr) // dimensions[1]
             char = window.getch(dimensions[0]-1, len(inputStr) % dimensions[1])
             time.sleep(.001)
             if char == curses.KEY_BACKSPACE or char == 127: # backspace
                 inputStr = inputStr[:-1] # [:-1] sad blockhead
-                
+
             elif char == 9: # tab
                 scrollPos = 0
                 variables.currChannel += 1
@@ -700,7 +701,7 @@ while True:
 
             elif char == curses.KEY_LEFT: # left arrow
                 pass # does nothing
-                
+
             elif char == ord('\n'):
                 interpret(inputStr)
                 inputStr = ''
@@ -708,6 +709,5 @@ while True:
                 pass # some weird keys like F1-F12 that crash chr()
             else:
                 inputStr += chr(char)
-            
+
             redraw()
-    
