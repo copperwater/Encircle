@@ -1,6 +1,7 @@
 Critical issues
 =================================
 Dealing with non-ASCII characters (CP437? Extended ASCII? Unicode?)
+Ability to go back in the input buffer and edit text
 
 
 Normal things
@@ -16,6 +17,9 @@ Implement commands 371 ":server 371 me :Info Text", 374 ":server 374 me :End of 
 Several settings aren't controllable by options. Make a list of these and add them to option.
 Think about adding addToCurrAsNotice as a function
 command 443 is wrong: it can be returned when you try to /invite someone to a channel who is already on that channel, and in this case it displays incorrectly.
+double enter for submitting anything because a stray enter can do bad things
+command 742: :sinisalo.freenode.net 742 RPI_OpBot ##rpicschat t ntcslk :MODE cannot be set du
+e to channel having an active MLOCK restriction policy
 
 
 Minor things
@@ -30,6 +34,7 @@ Think about phasing out the special "you" color - it doesn't add too much to the
 Think about changing command error messages to the format "/command: error message"
 Think about adding a new function that determines whether a "channel" (window) is actually a channel on the server.
 Add setting to control notifying other people when you block them: you can 1) post a message to channels you're both in; 2) post a message to them directly, or 3) post nothing. In the cases where you send a message, have those messages be settings.
+IRC code 249
 
 
 Wishlist
@@ -44,3 +49,4 @@ Bell option - sound system bell when new messages come in
 Code Page 437 support?
 /mode greater adaptability - you *should* be able to do /mode #channel +v nick without being on that channel, but you can't now
 Add /encirclehelp as a separate command (involves creating help pages and maybe a system to display them in the program)
+Channel muting or marking the ! in a different color
